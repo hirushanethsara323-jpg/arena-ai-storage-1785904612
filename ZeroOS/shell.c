@@ -42,16 +42,17 @@ static void clear_screen(void) {
 }
 
 static void cmd_help(void) {
-    terminal_writestring("\n Zero OS Shell v0.2 - Commands:\n");
+    terminal_writestring("\n Zero OS Shell v0.3 - Commands:\n");
     terminal_writestring("  help        - Show this help\n");
     terminal_writestring("  clear       - Clear screen\n");
     terminal_writestring("  echo <text> - Print text\n");
-    terminal_writestring("  zero        - Show Zero info\n");
+    terminal_writestring("  zero/logo   - Show Zero info\n");
     terminal_writestring("  uname       - System info\n");
+    terminal_writestring("  mem         - Memory stats + kmalloc test\n");
     terminal_writestring("  reboot      - Reboot system\n");
     terminal_writestring("  history     - Command count\n");
-    terminal_writestring("  logo        - Show Zero logo\n");
-    terminal_writestring("\n  [Phase 3 coming: ls, cat, mem, fs]\n\n");
+    terminal_writestring("\n  New in v0.3: GDT, IDT, PMM, Heap\n");
+    terminal_writestring("  Next: fs, vfs, elf loader\n\n");
 }
 
 static void cmd_zero(void) {
@@ -65,11 +66,52 @@ static void cmd_zero(void) {
     terminal_writestring("  v0.2 Genesis + Shell\n\n");
 }
 
+extern uint32_t pmm_get_free_blocks(void);
+extern uint32_t pmm_get_total_blocks(void);
+extern uint32_t heap_get_free(void);
+extern void* kmalloc(uint32_t size);
+extern void kfree(void* ptr);
+
 static void cmd_uname(void) {
-    terminal_writestring("\n Zero OS 0.2.0 x86_64 Genesis+Shell\n");
-    terminal_writestring(" Kernel: zero-kernel.elf 8.1K -> now 12K+\n");
-    terminal_writestring(" Build: freestanding, VGA 80x25, PS/2 kbd\n");
+    terminal_writestring("\n Zero OS 0.3.0 x86_64 Memory Build\n");
+    terminal_writestring(" Kernel: zero-kernel.elf 13K -> now 24K+\n");
+    terminal_writestring(" Build: GDT+IDT+PIC+PMM+Heap+VGA+KBD+Shell\n");
     terminal_writestring(" Ring: Active\n\n");
+}
+
+static void cmd_mem(void) {
+    terminal_writestring("\n [Memory]\n");
+    uint32_t total = pmm_get_total_blocks();
+    uint32_t free = pmm_get_free_blocks();
+    uint32_t used = total - free;
+    
+    terminal_writestring("  PMM Total blocks: ");
+    { char buf[16]; int i=0; if(total==0) buf[i++]='0'; else { char rev[16]; int r=0; uint32_t n=total; while(n>0){ rev[r++]='0'+(n%10); n/=10;} while(r>0) buf[i++]=rev[--r]; } buf[i]=0; terminal_writestring(buf); }
+    terminal_writestring("\n  PMM Free blocks: ");
+    { char buf[16]; int i=0; if(free==0) buf[i++]='0'; else { char rev[16]; int r=0; uint32_t n=free; while(n>0){ rev[r++]='0'+(n%10); n/=10;} while(r>0) buf[i++]=rev[--r]; } buf[i]=0; terminal_writestring(buf); }
+    terminal_writestring("\n  PMM Used blocks: ");
+    { char buf[16]; int i=0; if(used==0) buf[i++]='0'; else { char rev[16]; int r=0; uint32_t n=used; while(n>0){ rev[r++]='0'+(n%10); n/=10;} while(r>0) buf[i++]=rev[--r]; } buf[i]=0; terminal_writestring(buf); }
+    
+    terminal_writestring("\n  Heap free: ");
+    { uint32_t hf = heap_get_free(); char buf[16]; int i=0; if(hf==0) buf[i++]='0'; else { char rev[16]; int r=0; uint32_t n=hf; while(n>0){ rev[r++]='0'+(n%10); n/=10;} while(r>0) buf[i++]=rev[--r]; } buf[i]=0; terminal_writestring(buf); terminal_writestring(" bytes"); }
+    
+    terminal_writestring("\n  Block size: 4096 bytes\n");
+    terminal_writestring("  Heap: 1MB @0x200000\n\n");
+
+    terminal_writestring("  Testing kmalloc(64)... ");
+    void* test = kmalloc(64);
+    if(test) {
+        terminal_writestring("OK @0x");
+        uint32_t addr = (uint32_t)test;
+        char hex[] = "0123456789ABCDEF";
+        char out[9]; for(int i=0;i<8;i++){ out[7-i]=hex[addr & 0xF]; addr>>=4; } out[8]=0;
+        terminal_writestring(out);
+        terminal_writestring("\n  Freeing... ");
+        kfree(test);
+        terminal_writestring("OK\n\n");
+    } else {
+        terminal_writestring("FAIL OOM\n\n");
+    }
 }
 
 static void execute_command(void) {
@@ -92,6 +134,8 @@ static void execute_command(void) {
         cmd_zero();
     } else if(strcmp(buffer, "uname") == 0 || strcmp(buffer, "uname -a") == 0) {
         cmd_uname();
+    } else if(strcmp(buffer, "mem") == 0) {
+        cmd_mem();
     } else if(strcmp(buffer, "reboot") == 0) {
         terminal_writestring("\n Rebooting Zero OS...\n");
         // Try reboot via 8042
