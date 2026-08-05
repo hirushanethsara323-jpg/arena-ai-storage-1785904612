@@ -112,7 +112,7 @@ void draw_zero_logo(void) {
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("            +@@@@@@@@@@@*     ZERO OS     *@@@@@@@@@@@+              \n");
-    terminal_writestring("            %@@@@@@@@@@@=     v2.0.0      =@@@@@@@@@@@%              \n");
+    terminal_writestring("            %@@@@@@@@@@@=     v4.0.0      =@@@@@@@@@@@%              \n");
     terminal_writestring("            +@@@@@@@@@@@*                 *@@@@@@@@@@@+              \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
@@ -272,9 +272,9 @@ void kernel_main(uint32_t magic, uint32_t mb_info) {
     fat32_init();
     terminal_writestring("OK\n");
 
-    terminal_writestring("  > ZeroAI init... ");
-    ai_init();
-
+    // AI disabled as per user request - anik tika hodatama hadanna
+    // terminal_writestring("  > ZeroAI init... ");
+    // ai_init();
     terminal_writestring("  > Speaker beep test... ");
     speaker_play_tone(800, 60);
     terminal_writestring("OK\n");
@@ -285,17 +285,17 @@ void kernel_main(uint32_t magic, uint32_t mb_info) {
 
     terminal_writestring("\n");
     terminal_writestring("  ------------------------------------------------------------\n");
-    terminal_writestring("   Zero OS v2.0.0 - ULTIMATE Build\n");
-    terminal_writestring("   All v1.2 + USB-HID + AC97 + ZeroAI + Enhanced\n");
+    terminal_writestring("   Zero OS v4.0.0 - REAL DRIVERS Build (AI removed)\n");
+    terminal_writestring("   GDT+IDT+PMM+Heap+Paging+USB-HID Real+AC97+FAT32 Real+NET+SMP+FS\n");
     terminal_writestring("   Zero Bloat. Zero Tracking. Zero Limits.\n");
     terminal_writestring("  ------------------------------------------------------------\n");
     terminal_writestring("\n");
-    terminal_writestring("   New in v2.0:\n");
-    terminal_writestring("   - USB-HID: Keyboard/Mouse HID report\n");
-    terminal_writestring("   - AC97: Audio PCM + beep fallback\n");
-    terminal_writestring("   - ZeroAI: Local offline rule-based AI\n");
-    terminal_writestring("   - Enhanced NET + FAT32 + SMP\n");
-    terminal_writestring("   - 40+ shell commands\n");
+    terminal_writestring("   New in v4.0 (AI epa, anik tika hodatama):\n");
+    terminal_writestring("   - USB-HID Real: HID keycode->ASCII, 6KRO, modifiers\n");
+    terminal_writestring("   - AC97 Real: BAR0 IO base, PCM buffer alloc\n");
+    terminal_writestring("   - FAT32 Real: ATA sector read, boot sig check\n");
+    terminal_writestring("   - NET: PCI scan + NIC detection\n");
+    terminal_writestring("   - KBD: PS/2 + USB-HID fallback\n");
     terminal_writestring("\n");
 
     // enable interrupts

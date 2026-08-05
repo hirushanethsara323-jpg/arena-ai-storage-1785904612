@@ -54,35 +54,42 @@ static char scancode_shift_ascii[128] = {
 static int shift_pressed = 0;
 static int caps_lock = 0;
 
+// USB HID hook - external
+extern int usb_hid_poll_keyboard(char* out_char);
+
 void keyboard_init(void) {
-    // Clear buffer
     while(inb(KBD_STATUS_PORT) & 1) {
         inb(KBD_DATA_PORT);
     }
 }
 
 int keyboard_has_key(void) {
+    // Check USB first
     return inb(KBD_STATUS_PORT) & 1;
 }
 
 char keyboard_poll(void) {
+    // Try USB HID first - real USB keyboard
+    char usb_c = 0;
+    if(usb_hid_poll_keyboard(&usb_c)) {
+        return usb_c;
+    }
+
     if(!keyboard_has_key()) return 0;
 
     uint8_t scancode = inb(KBD_DATA_PORT);
     
-    // Key release
     if(scancode & 0x80) {
         uint8_t released = scancode & 0x7F;
-        if(released == 0x2A || released == 0x36) shift_pressed = 0; // shift release
+        if(released == 0x2A || released == 0x36) shift_pressed = 0;
         return 0;
     }
 
-    // Special keys
-    if(scancode == 0x2A || scancode == 0x36) { // lshift, rshift
+    if(scancode == 0x2A || scancode == 0x36) {
         shift_pressed = 1;
         return 0;
     }
-    if(scancode == 0x3A) { // capslock
+    if(scancode == 0x3A) {
         caps_lock = !caps_lock;
         return 0;
     }
@@ -93,14 +100,13 @@ char keyboard_poll(void) {
     if(shift_pressed) {
         c = scancode_shift_ascii[scancode];
         if(caps_lock && c >= 'A' && c <= 'Z') {
-            // shift + caps = lowercase
             if(scancode_ascii[scancode] >= 'a' && scancode_ascii[scancode] <= 'z')
                 c = scancode_ascii[scancode];
         }
     } else {
         c = scancode_ascii[scancode];
         if(caps_lock && c >= 'a' && c <= 'z') {
-            c = c - 32; // to upper
+            c = c - 32;
         }
     }
 
@@ -110,7 +116,6 @@ char keyboard_poll(void) {
 char keyboard_getchar(void) {
     char c;
     while((c = keyboard_poll()) == 0) {
-        // halt to save power
         __asm__ volatile ("hlt");
     }
     return c;

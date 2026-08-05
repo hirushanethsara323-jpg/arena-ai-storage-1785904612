@@ -3,7 +3,7 @@ CFLAGS = -ffreestanding -fno-builtin -fno-stack-protector -nostartfiles -nodefau
 BOOT_CFLAGS = -ffreestanding -c
 
 LDFLAGS = -n -T linker.ld
-OBJECTS = boot.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o pit.o paging.o speaker.o smp.o context.o pci.o usb.o usb_hid.o ac97.o net.o fs/ata.o fs/ramfs.o fs/vfs.o fs/zerofs2.o fs/fat32.o gui/fb.o gui/mouse.o gui/compositor.o userland/elf.o userland/syscall.o userland/task.o userland/app.o ai.o
+OBJECTS = boot.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o pit.o paging.o speaker.o smp.o context.o pci.o usb.o usb_hid.o ac97.o net.o fs/ata.o fs/ramfs.o fs/vfs.o fs/zerofs2.o fs/fat32.o gui/fb.o gui/mouse.o gui/compositor.o userland/elf.o userland/syscall.o userland/task.o userland/app.o
 KERNEL = zero-kernel.elf
 
 all: kernel
