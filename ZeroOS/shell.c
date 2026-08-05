@@ -61,17 +61,21 @@ extern void zerofs2_ls(void);
 extern int zerofs2_create(const char* name);
 extern int smp_get_cpu_count(void);
 extern void speaker_play_tone(uint32_t freq, uint32_t ms);
+extern void pci_list(void);
+extern void net_list(void);
+extern void fat32_ls(void);
+extern int usb_get_device_count(void);
 
 static void cmd_help(void) {
-    terminal_writestring("\n Zero OS Shell v1.1 Performance - Commands:\n");
+    terminal_writestring("\n Zero OS Shell v1.2 Performance+ - Commands:\n");
     terminal_writestring("  help, clear, echo, zero, uname, mem\n");
     terminal_writestring("  ls, cat, touch, rm, write - ZeroFS v1\n");
-    terminal_writestring("  ls2, touch2, cat2, rm2, sync2 - ZeroFS2 new\n");
+    terminal_writestring("  ls2, touch2 - ZeroFS2 v2\n");
     terminal_writestring("  gui, ps, ticks, spawn, exec\n");
-    terminal_writestring("  apps, launch, store, paging\n");
-    terminal_writestring("  smp, beep <freq> <ms>\n");
+    terminal_writestring("  apps, launch, store, paging, smp\n");
+    terminal_writestring("  beep, pci, usb, net, fatls\n");
     terminal_writestring("  reboot, history\n");
-    terminal_writestring("\n  v1.1: SMP+FS2+Speaker+Context switch 49K->~60K\n\n");
+    terminal_writestring("\n  v1.2: PCI+USB+NET+FAT32+Preemptive\n\n");
 }
 
 static void cmd_zero(void) {
@@ -193,13 +197,20 @@ static void execute_command(void) {
         terminal_writestring("\n [SMP] CPUs: ");
         { int n=smp_get_cpu_count(); char b[12]; int i=0; if(n==0)b[i++]='0'; else {char rev[12];int r=0;while(n>0){rev[r++]='0'+(n%10);n/=10;}while(r>0)b[i++]=rev[--r];} b[i]=0; terminal_writestring(b); terminal_writestring("\n\n"); }
     } else if(strcmp(buffer, "ls2") == 0) {
-        extern void zerofs2_ls(void);
         zerofs2_ls();
+    } else if(strcmp(buffer, "pci") == 0) {
+        pci_list();
+    } else if(strcmp(buffer, "usb") == 0) {
+        terminal_writestring("\n [USB] Devices: ");
+        { int n=usb_get_device_count(); char b[12]; int i=0; if(n==0)b[i++]='0'; else {char rev[12];int r=0;while(n>0){rev[r++]='0'+(n%10);n/=10;}while(r>0)b[i++]=rev[--r];} b[i]=0; terminal_writestring(b); terminal_writestring(" controllers\n\n"); }
+    } else if(strcmp(buffer, "net") == 0) {
+        net_list();
+    } else if(strcmp(buffer, "fatls") == 0) {
+        fat32_ls();
     } else if(strncmp(buffer, "touch2 ", 7)==0) {
         char* fn=buffer+7; while(*fn==' ')fn++;
         if(*fn) { int r=zerofs2_create(fn); terminal_writestring(r>=0 ? "\n [FS2] Created\n\n" : "\n [FS2] Failed\n\n"); } else terminal_writestring("\n Usage: touch2 <file>\n\n");
     } else if(strncmp(buffer, "beep ", 5)==0) {
-        // beep freq ms
         char* p=buffer+5; while(*p==' ')p++;
         int freq=0,ms=0; while(*p>='0'&&*p<='9'){ freq=freq*10+(*p-'0'); p++; } while(*p==' ')p++; while(*p>='0'&&*p<='9'){ ms=ms*10+(*p-'0'); p++; }
         if(freq==0) freq=800; if(ms==0) ms=100;

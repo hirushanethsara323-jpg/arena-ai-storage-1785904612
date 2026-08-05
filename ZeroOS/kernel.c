@@ -112,7 +112,7 @@ void draw_zero_logo(void) {
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("            +@@@@@@@@@@@*     ZERO OS     *@@@@@@@@@@@+              \n");
-    terminal_writestring("            %@@@@@@@@@@@=     v1.1.0      =@@@@@@@@@@@%              \n");
+    terminal_writestring("            %@@@@@@@@@@@=     v1.2.0      =@@@@@@@@@@@%              \n");
     terminal_writestring("            +@@@@@@@@@@@*                 *@@@@@@@@@@@+              \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
@@ -145,6 +145,10 @@ extern int app_register(const char* name, const char* desc, void (*entry)(void),
 extern void smp_init(void);
 extern void speaker_play_tone(uint32_t freq, uint32_t ms);
 extern void zerofs2_init(void);
+extern void pci_scan(void);
+extern void usb_init(void);
+extern void net_init(void);
+extern void fat32_init(void);
 extern void shell_run(void);
 
 void kernel_main(uint32_t magic, uint32_t mb_info) {
@@ -246,6 +250,19 @@ void kernel_main(uint32_t magic, uint32_t mb_info) {
     zerofs2_init();
     terminal_writestring("OK\n");
 
+    terminal_writestring("  > PCI scan... ");
+    pci_scan();
+
+    terminal_writestring("  > USB init... ");
+    usb_init();
+
+    terminal_writestring("  > NET init... ");
+    net_init();
+
+    terminal_writestring("  > FAT32 init... ");
+    fat32_init();
+    terminal_writestring("OK\n");
+
     terminal_writestring("  > Speaker beep test... ");
     speaker_play_tone(800, 60);
     terminal_writestring("OK\n");
@@ -256,17 +273,17 @@ void kernel_main(uint32_t magic, uint32_t mb_info) {
 
     terminal_writestring("\n");
     terminal_writestring("  ------------------------------------------------------------\n");
-    terminal_writestring("   Zero OS v1.1.0 - Performance Build\n");
-    terminal_writestring("   GDT+IDT+PIC+PMM+Heap+VFS+FB+Mouse+Comp+PIT+Task+ELF+Sys+Paging+Apps+SMP+FS2+SPK\n");
+    terminal_writestring("   Zero OS v1.2.0 - Performance+ Build\n");
+    terminal_writestring("   GDT+IDT+PIC+PMM+Heap+VFS+FB+Mouse+Comp+PIT+Task+ELF+Sys+Paging+Apps+SMP+FS2+PCI+USB+NET+FAT32\n");
     terminal_writestring("   Zero Bloat. Zero Tracking. Zero Limits.\n");
     terminal_writestring("  ------------------------------------------------------------\n");
     terminal_writestring("\n");
-    terminal_writestring("   New in v1.1:\n");
-    terminal_writestring("   - SMP: CPUID + APIC detection\n");
-    terminal_writestring("   - ZeroFS2: 128 inodes, journal, ATA sync\n");
-    terminal_writestring("   - Speaker: PC beep 0x61 + PIT ch2\n");
-    terminal_writestring("   - Context switch: real asm (64-bit)\n");
-    terminal_writestring("   - Paging: improved PD\n");
+    terminal_writestring("   New in v1.2:\n");
+    terminal_writestring("   - PCI: Bus scan, class detect\n");
+    terminal_writestring("   - USB: UHCI/OHCI/EHCI/XHCI detection\n");
+    terminal_writestring("   - NET: NE2000/E1000 NIC + TCP/IP stub\n");
+    terminal_writestring("   - FAT32: Boot sector + root ls\n");
+    terminal_writestring("   - Preemptive: PIT IRQ0 -> scheduler\n");
     terminal_writestring("\n");
 
     // enable interrupts
