@@ -1,98 +1,81 @@
-# Zero OS 🌀
+# Zero OS 🌀 v0.2 - Shell Build
 
 > **Zero Bloat. Zero Tracking. Zero Limits.**
 
-A real, bootable operating system from scratch - inspired by Windows/macOS but with a unique Zero identity.
+### Current Status: v0.2 Shell ✅
 
-### Vision
-- **Name:** Zero OS
-- **Tagline:** Start from Zero, Build Everything
-- **Design:** Unique - Cyber-minimal, dark with neon cyan/purple accents, circular / zero-inspired UI
-- **Philosophy:** Everything is a file, everything is fast, zero unnecessary layers
+**Real Kernel:** `zero-kernel.elf` - 13K (was 8.1K in v0.1)
+- Boots to VGA 80x25
+- **NEW:** PS/2 Polling Keyboard Driver (`keyboard.c`)
+- **NEW:** Zero Shell with commands (`shell.c`)
+- **NEW:** Scrolling terminal + backspace support
 
-### Architecture Roadmap
+```
+zero@zero-os:~$ help
+ Zero OS Shell v0.2 - Commands:
+  help, clear, echo <text>, zero, uname, reboot, history, logo
+```
 
-#### 🔹 Phase 1: Genesis [NOW]
-- [x] Multiboot bootloader (GAS assembly, no NASM needed)
-- [x] Kernel in C (freestanding)
-- [x] VGA driver - print to screen
-- [x] Boot to "Hello Zero OS"
-- Target: Buildable kernel.elf
-
-#### 🔹 Phase 2: Core (Next)
-- [ ] GDT (Global Descriptor Table)
-- [ ] IDT + Interrupt handling
-- [ ] Keyboard driver (PS/2)
-- [ ] Simple shell: `zero> help, clear, echo, reboot`
-- [ ] Timer (PIT)
-
-#### 🔹 Phase 3: Memory
-- [ ] Physical memory manager (bitmap)
-- [ ] Virtual memory + Paging
-- [ ] Heap (kmalloc / kfree)
-- [ ] Zero Memory - zero-copy philosophy
-
-#### 🔹 Phase 4: ZeroFS
-- [ ] Initrd / RamFS
-- [ ] Custom ZeroFS - zero overhead FS
-- [ ] File descriptors
-
-#### 🔹 Phase 5: Zero UI [UNIQUE DESIGN]
-- **Concept:** Everything is circular / zero.
-- Dock is a ring around screen, not bottom bar
-- Windows are borderless with glow
-- No icons - zero icons, just search + gestures
-- Color: #0A0A0F background, #00FFD1 cyan, #8B5CF6 purple
-- Font: JetBrains Mono / Space Grotesk
-- Boots directly to command halo, not desktop
-
-#### 🔹 Phase 6: Userland
-- [ ] ELF loader
-- [ ] Syscalls
-- [ ] Processes + scheduler
-- [ ] Drivers: VESA graphics, mouse, ATA disk
-
-#### 🔹 Phase 7: Network & AI
-- [ ] Network stack
-- [ ] Zero AI - local assistant built into kernel shell
-
----
-
-### Build (in Arena sandbox, no qemu/nasm)
-
-We build using only gcc (Debian).
-
+### Build
 ```bash
 cd ZeroOS
-make
+make kernel
+# Output: zero-kernel.elf 13K
+# Run locally: qemu-system-i386 -kernel zero-kernel.elf
 ```
 
-Outputs `zero-kernel.elf` - bootable with GRUB/QEMU.
+### What's New in v0.2
+- **io.h:** inb/outb low-level
+- **keyboard.h/c:** 128 scancode table, shift, capslock, polling via 0x60/0x64
+- **shell.h/c:** 128 byte buffer, history count, 8 commands
+- **kernel.c:** Now with scroll, backspace, calls shell_run()
 
-If you have local QEMU:
-```bash
-qemu-system-i386 -kernel zero-kernel.elf
-# or with ISO:
-qemu-system-i386 -cdrom zero-os.iso
-```
+### Roadmap
 
-### Project Structure
+#### ✅ Phase 1: Genesis (Done)
+- Multiboot bootloader, VGA, Hello Zero
+
+#### ✅ Phase 2: Shell (NOW - Done)
+- [x] Keyboard driver (polling)
+- [x] Shell + 7 commands
+- [x] Scroll + backspace
+
+#### 🔜 Phase 3: Memory (Next)
+- [ ] GDT - flat 0-4GB + 64-bit
+- [ ] IDT + PIC remap - interrupt driven keyboard
+- [ ] Physical memory manager (bitmap at 1M)
+- [ ] kmalloc/kfree heap
+
+#### ⏳ Phase 4: ZeroFS
+- [ ] RamFS, ZeroFS log-structured
+- [ ] ATA PIO driver
+
+#### 🎨 Phase 5: Zero Ring GUI (Unique)
+- Circular dock, orbit apps, void browser
+- Web simulator already shows concept (web/index.html)
+
+#### 🚀 Phase 6: Userland
+- ELF loader, syscalls, scheduler
+
+### File Structure
 ```
 ZeroOS/
-├── boot.S          # Multiboot header + entry (GAS)
-├── kernel.c        # Kernel main + VGA driver
-├── linker.ld       # Linker script
+├── boot.S          # Entry
+├── kernel.c        # VGA + main -> shell
+├── io.h            # inb/outb
+├── keyboard.h/c    # PS/2 driver
+├── shell.h/c       # Zero Shell
+├── linker.ld
 ├── Makefile
-├── README.md
-└── docs/
-    └── design.md   # Unique Zero design spec
+├── zero-kernel.elf # 13K bootable
+├── docs/design.md  # Unique design
+└── web/index.html  # Web preview of Zero Ring UI
 ```
 
-### Zero Design Principles
-1.  **Zero = Circle:** All UI elements circular or rounded. No sharp corners.
-2.  **Zero Latency:** No animations >150ms.
-3.  **Zero Clutter:** Only 3 things on screen: Halo Prompt, Zero Ring, Status.
-4.  **Zero Tracking:** No telemetry, ever.
+### Zero Design
+- Background #0A0A0F, Cyan #00FFD1, Purple #8B5CF6
+- No sharp corners, all zero/circle
+- Zero Ring = central interaction
 
 ---
-Built with ❤️ from zero.
+Built from zero. Push to GitHub storage: https://github.com/hirushanethsara323-jpg/arena-ai-storage-1785904612
