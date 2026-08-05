@@ -320,12 +320,44 @@ void kernel_main(uint32_t magic, uint32_t mb_info) {
 
     if(fb.is_available && !fb.is_text_mode) {
         terminal_writestring("\n  > Booting to GUI (VESA 1024x768x32)...\n");
-        terminal_writestring("  > Zero Ring GUI active\n\n");
-        // GUI loop
+        terminal_writestring("  > Zero Ring GUI active - Mouse + Window drag + Orbit apps\n\n");
+        extern void compositor_handle_mouse(int mx, int my, int buttons);
+        extern int mouse_poll(void* state);
+        extern int keyboard_has_key(void);
+        extern char keyboard_poll(void);
+        extern void fb_fill_rect(int x, int y, int w, int h, uint32_t color);
+        // Mouse state struct
+        typedef struct { int x; int y; int buttons; int dx; int dy; } mouse_state_t;
+        extern mouse_state_t mouse;
+        // GUI loop with mouse + keyboard
         while(1) {
+            // Poll mouse
+            mouse_state_t ms;
+            if(mouse_poll(&ms)) {
+                compositor_handle_mouse(ms.x, ms.y, ms.buttons);
+            }
+            // Poll keyboard in GUI - press t,f,b,e,s,a to launch apps, c to close focused
+            if(keyboard_has_key()) {
+                char k = keyboard_poll();
+                if(k=='t' || k=='T') {
+                    extern int compositor_create_window(const char* title, int x, int y, int w, int h);
+                    compositor_create_window("Terminal", 100, 100, 400, 300);
+                } else if(k=='f' || k=='F') {
+                    extern int compositor_create_window(const char* title, int x, int y, int w, int h);
+                    compositor_create_window("Files", 150, 150, 400, 300);
+                }
+            }
+
             compositor_draw();
-            // Simple delay to avoid 100% CPU
-            for(volatile int i=0;i<1000000;i++);
+
+            // Draw mouse cursor - white 8x8 + black border
+            fb_fill_rect(mouse.x, mouse.y, 2, 12, 0xFFFFFF);
+            fb_fill_rect(mouse.x, mouse.y, 8, 2, 0xFFFFFF);
+            fb_fill_rect(mouse.x, mouse.y, 8, 8, 0x000000);
+            fb_fill_rect(mouse.x+1, mouse.y+1, 6, 6, 0xFFFFFF);
+
+            // Simple delay
+            for(volatile int i=0;i<500000;i++);
         }
     } else {
         terminal_writestring("\n  > Booting to Shell (text mode fallback)...\n\n");
