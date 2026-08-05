@@ -130,6 +130,7 @@ extern void heap_init(uint32_t heap_start, uint32_t heap_size);
 extern uint32_t pmm_get_free_blocks(void);
 extern uint32_t pmm_get_total_blocks(void);
 extern uint32_t heap_get_free(void);
+extern void vfs_init(void);
 extern void shell_run(void);
 
 void kernel_main(uint32_t magic, uint32_t mb_info) {
@@ -178,21 +179,26 @@ void kernel_main(uint32_t magic, uint32_t mb_info) {
     heap_init(0x200000, 1024*1024);
     terminal_writestring("OK\n");
 
+    terminal_writestring("  > VFS init (ZeroFS)... ");
+    vfs_init();
+    terminal_writestring("OK\n");
+
     terminal_writestring("  > Zero Ring: [//////////] 100%\n\n");
 
     draw_zero_logo();
 
     terminal_writestring("\n");
     terminal_writestring("  ------------------------------------------------------------\n");
-    terminal_writestring("   Zero OS v0.3.0 - Memory Build\n");
-    terminal_writestring("   GDT+IDT+PIC+PMM+Heap Ready\n");
+    terminal_writestring("   Zero OS v0.4.0 - ZeroFS Build\n");
+    terminal_writestring("   GDT+IDT+PIC+PMM+Heap+VFS Ready\n");
     terminal_writestring("   Zero Bloat. Zero Tracking. Zero Limits.\n");
     terminal_writestring("  ------------------------------------------------------------\n");
     terminal_writestring("\n");
-    terminal_writestring("   New in v0.3:\n");
-    terminal_writestring("   - PMM: 16MB free, bitmap @0x10000\n");
-    terminal_writestring("   - Heap: 1MB @0x200000, kmalloc/kfree\n");
-    terminal_writestring("   - Type 'mem' in shell to see stats\n");
+    terminal_writestring("   New in v0.4:\n");
+    terminal_writestring("   - ZeroFS: RamFS 32 files, 4KB each\n");
+    terminal_writestring("   - ATA PIO driver (read/write sectors)\n");
+    terminal_writestring("   - New commands: ls, cat, touch, rm, write\n");
+    terminal_writestring("   - Type 'ls' to see files\n");
     terminal_writestring("\n");
 
     // enable interrupts

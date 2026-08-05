@@ -42,17 +42,21 @@ static void clear_screen(void) {
 }
 
 static void cmd_help(void) {
-    terminal_writestring("\n Zero OS Shell v0.3 - Commands:\n");
+    terminal_writestring("\n Zero OS Shell v0.4 - Commands:\n");
     terminal_writestring("  help        - Show this help\n");
     terminal_writestring("  clear       - Clear screen\n");
     terminal_writestring("  echo <text> - Print text\n");
     terminal_writestring("  zero/logo   - Show Zero info\n");
     terminal_writestring("  uname       - System info\n");
-    terminal_writestring("  mem         - Memory stats + kmalloc test\n");
-    terminal_writestring("  reboot      - Reboot system\n");
+    terminal_writestring("  mem         - Memory stats\n");
+    terminal_writestring("  ls          - List files (ZeroFS)\n");
+    terminal_writestring("  cat <file>  - Read file\n");
+    terminal_writestring("  touch <file>- Create file\n");
+    terminal_writestring("  rm <file>   - Delete file\n");
+    terminal_writestring("  write <file> <text> - Write to file\n");
+    terminal_writestring("  reboot      - Reboot\n");
     terminal_writestring("  history     - Command count\n");
-    terminal_writestring("\n  New in v0.3: GDT, IDT, PMM, Heap\n");
-    terminal_writestring("  Next: fs, vfs, elf loader\n\n");
+    terminal_writestring("\n  ZeroFS: 32 files max, 4KB each, ATA PIO driver\n\n");
 }
 
 static void cmd_zero(void) {
@@ -71,6 +75,12 @@ extern uint32_t pmm_get_total_blocks(void);
 extern uint32_t heap_get_free(void);
 extern void* kmalloc(uint32_t size);
 extern void kfree(void* ptr);
+extern void vfs_ls(void);
+extern int vfs_create(const char* name);
+extern int vfs_write_file(const char* name, const char* data);
+extern int vfs_read_file(const char* name, char* buffer, uint32_t max);
+extern int vfs_delete(const char* name);
+extern int vfs_exists(const char* name);
 
 static void cmd_uname(void) {
     terminal_writestring("\n Zero OS 0.3.0 x86_64 Memory Build\n");
@@ -136,6 +146,68 @@ static void execute_command(void) {
         cmd_uname();
     } else if(strcmp(buffer, "mem") == 0) {
         cmd_mem();
+    } else if(strcmp(buffer, "ls") == 0) {
+        vfs_ls();
+    } else if(strncmp(buffer, "touch ", 6) == 0) {
+        char* fname = buffer+6;
+        while(*fname==' ') fname++;
+        if(*fname==0) {
+            terminal_writestring("\n Usage: touch <filename>\n\n");
+        } else {
+            int ret = vfs_create(fname);
+            if(ret>=0) { terminal_writestring("\n Created: "); terminal_writestring(fname); terminal_writestring("\n\n"); }
+            else { terminal_writestring("\n Failed to create (exists or full)\n\n"); }
+        }
+    } else if(strncmp(buffer, "rm ", 3) == 0) {
+        char* fname = buffer+3;
+        while(*fname==' ') fname++;
+        if(*fname==0) {
+            terminal_writestring("\n Usage: rm <filename>\n\n");
+        } else {
+            int ret = vfs_delete(fname);
+            if(ret==0) { terminal_writestring("\n Deleted: "); terminal_writestring(fname); terminal_writestring("\n\n"); }
+            else { terminal_writestring("\n File not found\n\n"); }
+        }
+    } else if(strncmp(buffer, "cat ", 4) == 0) {
+        char* fname = buffer+4;
+        while(*fname==' ') fname++;
+        if(*fname==0) {
+            terminal_writestring("\n Usage: cat <filename>\n\n");
+        } else {
+            char buf[512];
+            int r = vfs_read_file(fname, buf, 511);
+            if(r>=0) {
+                buf[r]=0;
+                terminal_writestring("\n--- ");
+                terminal_writestring(fname);
+                terminal_writestring(" ---\n");
+                terminal_writestring(buf);
+                terminal_writestring("\n--- end ---\n\n");
+            } else {
+                terminal_writestring("\n File not found\n\n");
+            }
+        }
+    } else if(strncmp(buffer, "write ", 6) == 0) {
+        // write <file> <text>
+        char* p = buffer+6;
+        while(*p==' ') p++;
+        char* fname = p;
+        while(*p && *p!=' ') p++;
+        if(*p==0) {
+            terminal_writestring("\n Usage: write <file> <text>\n\n");
+        } else {
+            *p=0; p++;
+            while(*p==' ') p++;
+            if(*p==0) {
+                terminal_writestring("\n Usage: write <file> <text>\n\n");
+            } else {
+                int ret = vfs_write_file(fname, p);
+                if(ret>=0) { terminal_writestring("\n Wrote "); 
+                    { char nb[12]; int n=ret; int i=0; if(n==0)nb[i++]='0'; else {char rev[12];int r=0;while(n>0){rev[r++]='0'+(n%10);n/=10;}while(r>0)nb[i++]=rev[--r];} nb[i]=0; terminal_writestring(nb); }
+                    terminal_writestring(" bytes to "); terminal_writestring(fname); terminal_writestring("\n\n"); }
+                else { terminal_writestring("\n Write failed\n\n"); }
+            }
+        }
     } else if(strcmp(buffer, "reboot") == 0) {
         terminal_writestring("\n Rebooting Zero OS...\n");
         // Try reboot via 8042
