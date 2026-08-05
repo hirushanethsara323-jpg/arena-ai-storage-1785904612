@@ -1,10 +1,9 @@
-/* ZeroOS Boot Real - Full 32-bit GDT/IDT/ISR for cross-compiler */
-/* Use this when you have i686-elf-gcc + nasm + qemu */
-/* Compile with: i686-elf-gcc -m32 -c boot_real.S */
+/* ZeroOS Boot Real - Full 32-bit + VESA Framebuffer Request 1024x768x32 */
 
 .set ALIGN,    1<<0
 .set MEMINFO,  1<<1
-.set FLAGS,    ALIGN | MEMINFO
+.set VIDEO,    1<<2
+.set FLAGS,    ALIGN | MEMINFO | VIDEO
 .set MAGIC,    0x1BADB002
 .set CHECKSUM, -(MAGIC + FLAGS)
 
@@ -13,6 +12,13 @@
 .long MAGIC
 .long FLAGS
 .long CHECKSUM
+/* AOUT kludge - required when VIDEO flag set, even if not used, set 0 */
+.long 0, 0, 0, 0, 0
+/* Video mode */
+.long 0      /* 0 = linear graphics */
+.long 1024   /* width */
+.long 768    /* height */
+.long 32     /* depth bpp */
 
 .section .bss
 .align 16

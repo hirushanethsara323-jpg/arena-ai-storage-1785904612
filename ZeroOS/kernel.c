@@ -116,7 +116,7 @@ void draw_zero_logo(void) {
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("            +@@@@@@@@@@@*     ZERO OS     *@@@@@@@@@@@+              \n");
-    terminal_writestring("            %@@@@@@@@@@@=     v5.0.0      =@@@@@@@@@@@%              \n");
+    terminal_writestring("            %@@@@@@@@@@@=     v7.0.0      =@@@@@@@@@@@%              \n");
     terminal_writestring("            +@@@@@@@@@@@*                 *@@@@@@@@@@@+              \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
@@ -157,6 +157,8 @@ extern void net_init(void);
 extern void fat32_init(void);
 extern void ai_init(void);
 extern void shell_run(void);
+typedef struct { uint32_t* address; uint32_t width; uint32_t height; uint32_t pitch; uint8_t bpp; uint8_t type; uint8_t is_available; uint8_t is_text_mode; } framebuffer_t;
+extern framebuffer_t fb;
 
 extern void serial_init(void);
 
@@ -300,24 +302,35 @@ void kernel_main(uint32_t magic, uint32_t mb_info) {
 
     terminal_writestring("\n");
     terminal_writestring("  ------------------------------------------------------------\n");
-    terminal_writestring("   Zero OS v5.0.0 - ALL IN Build - Okkoma Hadala\n");
-    terminal_writestring("   GDT+IDT+PMM+Heap+Paging+USB-HID Real+AC97+FAT32 Real+NET+SMP+FS+AI\n");
+    terminal_writestring("   Zero OS v7.0.0 - GRAPHICS BOOT Build\n");
+    terminal_writestring("   VESA 1024x768x32 + Font + GUI Boot + All Drivers\n");
     terminal_writestring("   Zero Bloat. Zero Tracking. Zero Limits.\n");
     terminal_writestring("  ------------------------------------------------------------\n");
     terminal_writestring("\n");
-    terminal_writestring("   New in v5.0 (Okkoma hadanna):\n");
-    terminal_writestring("   - USB-HID Real: 6KRO + modifiers + report parse\n");
-    terminal_writestring("   - AC97 Real: BAR0 + PCM buffer\n");
-    terminal_writestring("   - FAT32 Real: ATA boot sig + root parse\n");
-    terminal_writestring("   - NET: PCI + NIC + ping sim\n");
-    terminal_writestring("   - AI: Local offline 20 facts back\n");
-    terminal_writestring("   - All drivers perfected\n");
+    terminal_writestring("   New in v7.0:\n");
+    terminal_writestring("   - VESA: Multiboot req 1024x768x32, fb parse mb_info\n");
+    terminal_writestring("   - Font: 8x8 bitmap, draw_char/string/scale\n");
+    terminal_writestring("   - GUI Boot: if VESA available boot to Zero Ring GUI else shell\n");
+    terminal_writestring("   - Compositor: window titles with font\n");
+    terminal_writestring("   - All previous perfected\n");
     terminal_writestring("\n");
 
     // enable interrupts
     __asm__ volatile ("sti");
 
-    shell_run();
+    if(fb.is_available && !fb.is_text_mode) {
+        terminal_writestring("\n  > Booting to GUI (VESA 1024x768x32)...\n");
+        terminal_writestring("  > Zero Ring GUI active\n\n");
+        // GUI loop
+        while(1) {
+            compositor_draw();
+            // Simple delay to avoid 100% CPU
+            for(volatile int i=0;i<1000000;i++);
+        }
+    } else {
+        terminal_writestring("\n  > Booting to Shell (text mode fallback)...\n\n");
+        shell_run();
+    }
 
     while(1) __asm__ volatile ("hlt");
 }

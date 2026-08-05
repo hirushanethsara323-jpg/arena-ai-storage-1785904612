@@ -4,7 +4,7 @@ AS = gcc
 ASFLAGS = -m32 -ffreestanding -c
 
 LDFLAGS = -m elf_i386 -T linker.ld
-OBJECTS = boot_real.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o pit.o paging.o speaker.o smp.o context.o pci.o usb.o usb_hid.o ac97.o net.o fs/ata.o fs/ramfs.o fs/vfs.o fs/zerofs2.o fs/fat32.o gui/fb.o gui/mouse.o gui/compositor.o userland/elf.o userland/syscall.o userland/task.o userland/app.o ai.o serial.o
+OBJECTS = boot_real.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o pit.o paging.o speaker.o smp.o context.o pci.o usb.o usb_hid.o ac97.o net.o fs/ata.o fs/ramfs.o fs/vfs.o fs/zerofs2.o fs/fat32.o gui/fb.o gui/font.o gui/mouse.o gui/compositor.o userland/elf.o userland/syscall.o userland/task.o userland/app.o ai.o serial.o
 KERNEL = zero-kernel-32.elf
 ISO = zero-os.iso
 
@@ -91,6 +91,9 @@ fs/fat32.o: fs/fat32.h fs/fat32.c fs/ata.h heap.h io.h
 gui/fb.o: gui/fb.h gui/fb.c io.h
 	$(CC) $(CFLAGS) gui/fb.c -o gui/fb.o
 
+gui/font.o: gui/font.h gui/fb.h gui/font.c io.h
+	$(CC) $(CFLAGS) gui/font.c -o gui/font.o
+
 gui/mouse.o: gui/mouse.h gui/mouse.c io.h
 	$(CC) $(CFLAGS) gui/mouse.c -o gui/mouse.o
 
@@ -120,7 +123,12 @@ iso: kernel
 	cp $(KERNEL) iso/boot/zero-kernel.elf
 	echo 'set timeout=0' > iso/boot/grub/grub.cfg
 	echo 'set default=0' >> iso/boot/grub/grub.cfg
-	echo 'menuentry "Zero OS v6.0 Real" {' >> iso/boot/grub/grub.cfg
+	echo 'set gfxmode=1024x768x32' >> iso/boot/grub/grub.cfg
+	echo 'set gfxpayload=keep' >> iso/boot/grub/grub.cfg
+	echo 'insmod vbe' >> iso/boot/grub/grub.cfg
+	echo 'insmod gfxterm' >> iso/boot/grub/grub.cfg
+	echo 'terminal_output gfxterm' >> iso/boot/grub/grub.cfg
+	echo 'menuentry "Zero OS v7.0 Graphics Boot" {' >> iso/boot/grub/grub.cfg
 	echo '  multiboot /boot/zero-kernel.elf' >> iso/boot/grub/grub.cfg
 	echo '  boot' >> iso/boot/grub/grub.cfg
 	echo '}' >> iso/boot/grub/grub.cfg

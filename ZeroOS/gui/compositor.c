@@ -1,5 +1,6 @@
 #include "compositor.h"
 #include "fb.h"
+#include "font.h"
 #include "../heap.h"
 #include "../io.h"
 
@@ -112,6 +113,7 @@ void compositor_draw(void) {
         fb_fill_rect(windows[i].x+windows[i].w-1, windows[i].y, 1, windows[i].h, border);
         // Title bar
         fb_fill_rect(windows[i].x, windows[i].y, windows[i].w, 28, 0x15151F);
+        font_draw_string(windows[i].x+8, windows[i].y+8, windows[i].title, 0xE8E8EC, 0x15151F);
         // Window content (blit buffer)
         for(int yy=0; yy<windows[i].h-28; yy++) {
             for(int xx=0; xx<windows[i].w; xx++) {
@@ -122,6 +124,9 @@ void compositor_draw(void) {
             }
         }
     }
+
+    // Draw Zero OS label in graphics mode
+    font_draw_string_scale(fb.width/2-80, fb.height-40, "Zero OS v7.0 Graphics Boot", 0x00FFD1, 1);
 }
 
 void compositor_handle_mouse(int mx, int my, int buttons) {
