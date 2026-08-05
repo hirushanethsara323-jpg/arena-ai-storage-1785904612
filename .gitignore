@@ -1,0 +1,11 @@
+# Secrets - never commit
+.netrc
+.env
+*.token
+__pycache__/
+node_modules/
+.venv/
+.cache/
+dist/
+build/
+
