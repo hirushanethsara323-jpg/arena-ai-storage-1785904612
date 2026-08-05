@@ -3,7 +3,7 @@ CFLAGS = -ffreestanding -fno-builtin -fno-stack-protector -nostartfiles -nodefau
 BOOT_CFLAGS = -ffreestanding -c
 
 LDFLAGS = -n -T linker.ld
-OBJECTS = boot.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o pit.o fs/ata.o fs/ramfs.o fs/vfs.o gui/fb.o gui/mouse.o gui/compositor.o userland/elf.o userland/syscall.o userland/task.o
+OBJECTS = boot.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o pit.o paging.o fs/ata.o fs/ramfs.o fs/vfs.o gui/fb.o gui/mouse.o gui/compositor.o userland/elf.o userland/syscall.o userland/task.o userland/app.o
 KERNEL = zero-kernel.elf
 
 all: kernel
@@ -17,7 +17,7 @@ kernel.o: kernel.c
 keyboard.o: keyboard.c keyboard.h io.h
 	$(CC) $(CFLAGS) keyboard.c -o keyboard.o
 
-shell.o: shell.c shell.h io.h keyboard.h heap.h pmm.h fs/vfs.h gui/compositor.h userland/task.h
+shell.o: shell.c shell.h io.h keyboard.h heap.h pmm.h fs/vfs.h gui/compositor.h userland/task.h userland/app.h
 	$(CC) $(CFLAGS) shell.c -o shell.o
 
 gdt.o: gdt.c gdt.h io.h
@@ -37,6 +37,9 @@ heap.o: heap.c heap.h io.h
 
 pit.o: pit.c pit.h io.h
 	$(CC) $(CFLAGS) pit.c -o pit.o
+
+paging.o: paging.c paging.h pmm.h heap.h io.h
+	$(CC) $(CFLAGS) paging.c -o paging.o
 
 fs/ata.o: fs/ata.c fs/ata.h io.h
 	$(CC) $(CFLAGS) fs/ata.c -o fs/ata.o
@@ -65,9 +68,12 @@ userland/syscall.o: userland/syscall.h userland/syscall.c fs/vfs.h io.h
 userland/task.o: userland/task.h userland/task.c heap.h pmm.h io.h
 	$(CC) $(CFLAGS) userland/task.c -o userland/task.o
 
+userland/app.o: userland/app.h userland/app.c heap.h io.h
+	$(CC) $(CFLAGS) userland/app.c -o userland/app.o
+
 kernel: $(OBJECTS)
 	ld $(LDFLAGS) -o $(KERNEL) $(OBJECTS)
-	@echo "✅ Zero OS v0.6 Kernel built: $(KERNEL)"
+	@echo "✅ Zero OS v1.0 Kernel built: $(KERNEL)"
 	@ls -lh $(KERNEL)
 	@file $(KERNEL) || true
 	@echo "Size: $$(du -h $(KERNEL) | cut -f1)"

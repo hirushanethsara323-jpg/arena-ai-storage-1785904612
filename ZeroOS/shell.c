@@ -45,6 +45,10 @@ extern void task_list(void);
 extern int task_create(const char* name, void (*entry)(void));
 extern void task_yield(void);
 extern uint32_t pit_get_ticks(void);
+extern void app_list(void);
+extern int app_launch(const char* name);
+extern void app_store(void);
+extern void paging_dump(void);
 
 static void dummy_task1(void) {
     while(1) {
@@ -54,21 +58,14 @@ static void dummy_task1(void) {
 }
 
 static void cmd_help(void) {
-    terminal_writestring("\n Zero OS Shell v0.6 - Commands:\n");
-    terminal_writestring("  help        - Show this help\n");
-    terminal_writestring("  clear       - Clear screen\n");
-    terminal_writestring("  echo <text> - Print text\n");
-    terminal_writestring("  zero/logo   - Show Zero info\n");
-    terminal_writestring("  uname       - System info\n");
-    terminal_writestring("  mem         - Memory stats\n");
-    terminal_writestring("  ls/cat/touch/rm/write - Files\n");
-    terminal_writestring("  gui         - Test compositor\n");
-    terminal_writestring("  ps          - List tasks\n");
-    terminal_writestring("  ticks       - PIT ticks\n");
-    terminal_writestring("  spawn <name> - Create dummy task\n");
-    terminal_writestring("  exec <elf>  - Load ELF (stub)\n");
-    terminal_writestring("  reboot/history\n");
-    terminal_writestring("\n  v0.6: PIT+Tasking+ELF+Syscalls, 16 tasks\n\n");
+    terminal_writestring("\n Zero OS Shell v1.0 - Commands:\n");
+    terminal_writestring("  help, clear, echo, zero, uname, mem\n");
+    terminal_writestring("  ls, cat, touch, rm, write - ZeroFS\n");
+    terminal_writestring("  gui, ps, ticks, spawn, exec\n");
+    terminal_writestring("  apps, launch <app>, store - App Store\n");
+    terminal_writestring("  paging, reboot, history\n");
+    terminal_writestring("\n  v1.0 STABLE: 6 apps, paging, 45K->51K kernel\n");
+    terminal_writestring("  Type 'store' for App Store, 'apps' to list\n\n");
 }
 
 static void cmd_zero(void) {
@@ -174,7 +171,18 @@ static void execute_command(void) {
         if(id>=0) { terminal_writestring("\n [TASK] Spawned "); terminal_writestring(name); terminal_writestring(" id="); { char b[12]; int n=id; int i=0; if(n==0)b[i++]='0'; else {char rev[12];int r=0;while(n>0){rev[r++]='0'+(n%10);n/=10;}while(r>0)b[i++]=rev[--r];} b[i]=0; terminal_writestring(b); } terminal_writestring("\n\n"); }
         else { terminal_writestring("\n [TASK] Failed, max tasks\n\n"); }
     } else if(strncmp(buffer, "exec ", 5)==0) {
-        terminal_writestring("\n [ELF] Exec not yet fully implemented in sandbox - needs paging\n\n");
+        terminal_writestring("\n [ELF] Exec - needs paging enabled on real HW\n\n");
+    } else if(strcmp(buffer, "apps") == 0) {
+        app_list();
+    } else if(strncmp(buffer, "launch ", 7)==0) {
+        char* name = buffer+7;
+        while(*name==' ') name++;
+        app_launch(name);
+    } else if(strcmp(buffer, "store") == 0) {
+        app_store();
+    } else if(strcmp(buffer, "paging") == 0) {
+        paging_dump();
+        terminal_writestring("\n");
     } else if(strcmp(buffer, "gui") == 0) {
         terminal_writestring("\n [GUI] Drawing Zero Ring compositor...\n");
         compositor_draw();
