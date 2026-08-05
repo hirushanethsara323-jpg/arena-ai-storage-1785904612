@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Zero OS - v0.2 Shell</title>
+<title>Zero OS - v0.3 Shell</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap');
   *{margin:0;padding:0;box-sizing:border-box}
@@ -259,14 +259,14 @@
 </style>
 </head>
 <body>
-  <div class="v2-badge">v0.2 SHELL BUILD • 13K KERNEL</div>
+  <div class="v2-badge">v0.3 SHELL BUILD • 25K KERNEL</div>
   <!-- Boot -->
   <div id="boot">
     <div class="zero-dot"></div>
     <div class="boot-text">
-      <div class="boot-log">Zero OS v0.2 Shell + KBD</div>
+      <div class="boot-log">Zero OS v0.3 Shell + KBD</div>
       Initializing Zero Ring... OK<br>
-      Loading Zero Core v0.2... OK<br>
+      Loading Zero Core v0.3... OK<br>
       Keyboard driver... OK<br>
       Shell... OK<br>
       <span style="color:var(--text)">Starting from zero_</span>
@@ -277,7 +277,7 @@
     <!-- Status -->
     <div id="status">
       <div class="status-dot"></div>
-      <span>ZERO OS • zero-kernel.elf • 13K • ONLINE</span>
+      <span>ZERO OS • zero-kernel.elf • 25K • ONLINE</span>
       <span id="clock">00:00</span>
     </div>
 
@@ -410,9 +410,9 @@ const apps = {
     <div class="terminal" id="term">\
       <div class="term-line"><span style="color:#6B7280"># Zero OS Terminal v0.1 - Real kernel boots at 0x10000c</span></div>\
       <div class="term-line">zero@zero-os:~$ <span style="color:var(--cyan)">uname -a</span></div>\
-      <div class="term-line">Zero OS 0.1.0 Genesis x86_64 zero-kernel.elf 13K</div>\
+      <div class="term-line">Zero OS 0.1.0 Genesis x86_64 zero-kernel.elf 25K</div>\
       <div class="term-line">zero@zero-os:~$ <span style="color:var(--cyan)">ls -lh /boot</span></div>\
-      <div class="term-line">-rwx 13K zero-kernel.elf  &lt;- REAL BOOTABLE KERNEL</div>\
+      <div class="term-line">-rwx 25K zero-kernel.elf  &lt;- REAL BOOTABLE KERNEL</div>\
       <div class="term-line">-rw- 1.2K boot.S</div>\
       <div class="term-line">-rw- 4.9K kernel.c</div>\
       <div class="term-line">zero@zero-os:~$ <span id="cursor">_</span><input class="term-input" id="term-input" autofocus></div>\
@@ -434,7 +434,7 @@ const apps = {
         <span style="opacity:0.5">◎</span><span style="font-size:13px">zero://welcome</span><span style="margin-left:auto;background:var(--cyan);color:#000;padding:4px 10px;border-radius:100px;font-size:11px;font-weight:700">ZERO SEARCH</span>\
       </div>\
       <h2 style="font-size:28px;line-height:1.1;margin-bottom:12px">Start from<br><span style="color:var(--cyan)">Zero.</span></h2>\
-      <p style="opacity:0.6;font-size:14px;line-height:1.5">This is Void - a browser with no tabs, no clutter.<br>Pages stack like cards. Search orbits.<br><br>Real Zero OS kernel built: <code style="background:rgba(0,255,209,0.1);padding:2px 6px;border-radius:4px">zero-kernel.elf (13K)</code><br>Bootable with QEMU / GRUB.<br><br><a href=\"https://github.com/hirushanethsara323-jpg/arena-ai-storage-1785904612\" target=\"_blank\" style=\"color:var(--cyan)\">View on GitHub →</a></p>\
+      <p style="opacity:0.6;font-size:14px;line-height:1.5">This is Void - a browser with no tabs, no clutter.<br>Pages stack like cards. Search orbits.<br><br>Real Zero OS kernel built: <code style="background:rgba(0,255,209,0.1);padding:2px 6px;border-radius:4px">zero-kernel.elf (25K)</code><br>Bootable with QEMU / GRUB.<br><br><a href=\"https://github.com/hirushanethsara323-jpg/arena-ai-storage-1785904612\" target=\"_blank\" style=\"color:var(--cyan)\">View on GitHub →</a></p>\
     </div>', 480, 360),
 
   editor: ()=> createWindow('editor','Zero Edit','\
@@ -451,7 +451,7 @@ const apps = {
 
   settings: ()=> createWindow('settings','Zero Settings','\
     <div style="padding:20px">\
-      <div style="display:flex;gap:12px;margin-bottom:20px"><div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--purple))"></div><div><div style="font-weight:700">Zero OS</div><div style="opacity:0.5;font-size:12px">v0.2 Shell • 13K kernel</div></div></div>\
+      <div style="display:flex;gap:12px;margin-bottom:20px"><div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--purple))"></div><div><div style="font-weight:700">Zero OS</div><div style="opacity:0.5;font-size:12px">v0.3 Shell • 25K kernel</div></div></div>\
       <div style="font-size:12px;opacity:0.6;margin-bottom:16px">UNIQUE DESIGN SPECS</div>\
       <div style="display:grid;gap:8px">\
         <div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:12px;display:flex;justify-content:space-between"><span>Cyan</span><span style="color:var(--cyan)">#00FFD1</span></div>\
@@ -495,7 +495,7 @@ document.addEventListener('keydown', e=>{
     if(val==='clear'){ term.innerHTML=''; }
     else if(val==='help'){ line.innerHTML='<span style="color:var(--dim)">Commands: help, clear, echo, uname, ls, zero</span>'; term.insertBefore(line, input.parentElement); }
     else if(val.startsWith('echo ')){ line.textContent=val.slice(5); term.insertBefore(line, input.parentElement); }
-    else if(val==='uname -a' || val==='zero'){ line.textContent='Zero OS 0.1.0 x86_64 13K - Zero Bloat. Zero Tracking.'; term.insertBefore(line, input.parentElement); }
+    else if(val==='uname -a' || val==='zero'){ line.textContent='Zero OS 0.1.0 x86_64 25K - Zero Bloat. Zero Tracking.'; term.insertBefore(line, input.parentElement); }
     else if(val!==''){ line.innerHTML='<span style="color:#FF5F57">Command not found: '+val+' (Phase 2 shell coming)</span>'; term.insertBefore(line, input.parentElement); }
     input.value='';
   }
