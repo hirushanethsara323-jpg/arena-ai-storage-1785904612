@@ -6,8 +6,6 @@
 window_t windows[MAX_WINDOWS];
 zero_ring_t zero_ring;
 
-static int strcmp_c(const char* a, const char* b){ while(*a&&*b&&*a==*b){a++;b++;} return *a-*b; }
-static void strcpy_c(char* d, const char* s){ while((*d++=*s++)); }
 
 void compositor_init(void) {
     for(int i=0;i<MAX_WINDOWS;i++) {
@@ -37,7 +35,7 @@ int compositor_create_window(const char* title, int x, int y, int w, int h) {
             windows[i].h = h;
             windows[i].focused = 1;
             windows[i].minimized = 0;
-            strcpy_c(windows[i].title, title);
+            { int _ii=0; while(title[_ii] && _ii<WINDOW_TITLE_MAX-1){ windows[i].title[_ii]=title[_ii]; _ii++; } windows[i].title[_ii]=0; }
             // Allocate backbuffer: w*h*4
             uint32_t size = w*h*4;
             windows[i].buffer = (uint32_t*)kmalloc(size);

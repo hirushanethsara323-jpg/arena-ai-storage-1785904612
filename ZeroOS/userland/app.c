@@ -7,7 +7,6 @@ extern void terminal_writestring(const char*);
 static app_t apps[MAX_APPS];
 static int app_count = 0;
 
-static void strcpy_a(char* d, const char* s){ while((*d++=*s++)); }
 static int strcmp_a(const char* a, const char* b){ while(*a&&*b&&*a==*b){a++;b++;} return *a-*b; }
 
 void app_init(void) {

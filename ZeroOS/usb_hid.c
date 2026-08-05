@@ -63,7 +63,6 @@ int usb_hid_poll_mouse(int* dx, int* dy, int* buttons) {
 
 char hid_keycode_to_ascii(uint8_t keycode, uint8_t mod) {
     int shift = (mod & 0x22) ? 1 : 0;
-    if(keycode >= 256) return 0;
     if(shift) return hid_to_ascii_shift[keycode];
     return hid_to_ascii[keycode];
 }

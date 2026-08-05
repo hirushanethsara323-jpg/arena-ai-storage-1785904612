@@ -278,21 +278,15 @@ void kernel_main(uint32_t magic, uint32_t mb_info) {
 
     terminal_writestring("  > FAT32 init... ");
     fat32_init();
-    terminal_writestring("OK, mounting disk.img LBA 0... ");
-    extern int fat32_mount(uint32_t lba);
-    extern void fat32_ls(void);
-    int m = fat32_mount(0);
-    if(m==0) {
-        terminal_writestring("OK\n  > FAT32 ls (real disk):\n");
-        fat32_ls();
-    } else terminal_writestring("FAIL\n");
+    terminal_writestring("OK\n");
 
     terminal_writestring("  > ZeroAI init... (bring back, okkoma hadanna) ");
     ai_init();
     terminal_writestring("OK\n");
 
-    terminal_writestring("  > Speaker beep test... SKIP for QEMU (needs IRQ)\n");
-    // speaker_play_tone(800, 60);
+    terminal_writestring("  > Speaker beep test... ");
+    speaker_play_tone(800, 60);
+    terminal_writestring("OK\n");
 
     terminal_writestring("  > Zero Ring: [//////////] 100%\n\n");
 

@@ -7,25 +7,14 @@ uint32_t fb_color(uint8_t r, uint8_t g, uint8_t b) {
 }
 
 void fb_init(uint32_t mb_info) {
-    // For now, try to parse multiboot framebuffer info if available
-    // Multiboot info structure is complex, for sandbox we fallback to text mode
-    // In real boot, mb_info points to multiboot_info_t from GRUB
-    // We'll check if magic indicates VESA available, else text mode
+    (void)mb_info;
     fb.is_available = 0;
     fb.is_text_mode = 1;
     fb.width = 80;
     fb.height = 25;
-    fb.address = (uint32_t*)0xB8000; // VGA text fallback
+    fb.address = (uint32_t*)0xB8000;
     fb.pitch = 0;
     fb.bpp = 16;
-
-    // TODO: Parse multiboot info for framebuffer
-    // If available, set fb.address to LFB phys (e.g., 0xFD000000), width 1024, height 768, bpp 32
-    // For now, keep text mode but set flag that GUI can still draw via VGA chars
-
-    // Simulate detection - for QEMU with -vga std and multiboot with framebuffer 1024x768x32
-    // If mb_info !=0 and contains framebuffer, we would set is_text_mode=0
-    // For sandbox build, stays in text mode but fb functions still work for compositor logic
 }
 
 void fb_clear(uint32_t color) {
