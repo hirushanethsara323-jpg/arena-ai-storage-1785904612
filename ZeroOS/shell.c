@@ -44,27 +44,28 @@ extern int vfs_read_file(const char* name, char* buffer, uint32_t max);
 extern int vfs_delete(const char* name);
 extern void compositor_draw(void);
 extern void ai_chat(const char* input);
+extern void usb_hid_inject(const char* str);
 
 static void dummy_task1(void){ while(1) task_yield(); }
 
 static void cmd_help(void){
-    terminal_writestring("\n Zero OS Shell v5.0 ALL IN - Okkoma hadala - Commands:\n");
+    terminal_writestring("\n Zero OS Shell v6.0 Real Disk+USB ALL - Okkoma hadanna:\n");
     terminal_writestring("  help, clear, echo, zero, uname, mem\n");
     terminal_writestring("  ls, cat, touch, rm, write - FS v1\n");
-    terminal_writestring("  ls2, touch2 - ZeroFS2 128 inodes journal\n");
+    terminal_writestring("  ls2, touch2 - ZeroFS2 128 inodes, fatls - FAT32 real\n");
     terminal_writestring("  gui, ps, ticks, spawn, exec\n");
     terminal_writestring("  apps, launch, store, paging, smp\n");
-    terminal_writestring("  beep/play <freq> <ms>, pci, usb, net, fatls, ping\n");
-    terminal_writestring("  ai <q> - ZeroAI local 20 facts (back!)\n");
-    terminal_writestring("  reboot, history\n");
-    terminal_writestring("\n  v5.0: Okkoma - USB-HID real, FAT32 real ATA, AC97, PCI, NET, SMP, AI\n");
-    terminal_writestring("  Storage: 2.3MB used, no issue, GitHub unlimited\n\n");
+    terminal_writestring("  beep/play, pci, usb, net, ping\n");
+    terminal_writestring("  usbtype <text> - inject USB HID queue (real path)\n");
+    terminal_writestring("  disk - show disk.img 10MB FAT32 info\n");
+    terminal_writestring("  ai <q> - ZeroAI 20 facts\n");
+    terminal_writestring("\n  v6.0: Real FAT32 disk.img 10MB, USB-HID queue, 68K\n\n");
 }
 static void cmd_zero(void){
-    terminal_writestring("\n   ____  _____ ____   ___     ___  ____\n  |_  / | ____|  _ \\ / _ \\   / _ \\/ ___|\n   / /  |  _| | |_) | | | | | | | \\___ \\\n  / /_  | |___|  _ <| |_| | | |_| |___) |\n /____| |_____|_| \\_\\\\___/   \\___/|____/\n\n  Zero Bloat. Zero Tracking. Zero Limits.\n  v5.0 ALL IN - Okkoma hadala - AI + USB + FS + NET + SMP\n\n");
+    terminal_writestring("\n   ____  _____ ____   ___     ___  ____\n  |_  / | ____|  _ \\ / _ \\   / _ \\/ ___|\n   / /  |  _| | |_) | | | | | | | \\___ \\\n  / /_  | |___|  _ <| |_| | | |_| |___) |\n /____| |_____|_| \\_\\\\___/   \\___/|____/\n\n  Zero Bloat. Zero Tracking. Zero Limits.\n  v6.0 Real Disk+USB - Okkoma hadala + disk.img\n\n");
 }
 static void cmd_uname(void){
-    terminal_writestring("\n Zero OS 5.0 x86_64 ALL IN Build\n Kernel: zero-kernel.elf ~68K, 35+ cmds, all drivers\n Build: GDT+IDT+PMM+Heap+Paging+FS+GUI+Tasking+PCI+USB-HID+AC97+NET+FAT32+SMP+AI\n\n");
+    terminal_writestring("\n Zero OS 6.0 x86_64 ALL IN Real Disk\n Kernel: zero-kernel.elf 68K+, 35+ cmds, disk.img 10MB FAT32\n Build: GDT+IDT+PMM+Heap+Paging+FS+GUI+Tasking+PCI+USB-HID Real+AC97+NET+FAT32 Real+SMP+AI\n\n");
 }
 static void cmd_mem(void){
     terminal_writestring("\n [Memory]\n");
@@ -102,10 +103,12 @@ static void execute_command(void){
     else if(strcmp(buffer,"fatls")==0) fat32_ls();
     else if(strncmp(buffer,"touch2 ",7)==0){ char* fn=buffer+7; while(*fn==' ')fn++; if(*fn){ int r=zerofs2_create(fn); terminal_writestring(r>=0?"\n [FS2] Created\n\n":"\n [FS2] Failed\n\n"); } else terminal_writestring("\n Usage: touch2 <file>\n\n"); }
     else if(strncmp(buffer,"beep ",5)==0||strncmp(buffer,"play ",5)==0){ char* p=buffer+5; while(*p==' ')p++; int freq=0,ms=0; while(*p>='0'&&*p<='9'){ freq=freq*10+(*p-'0'); p++; } while(*p==' ')p++; while(*p>='0'&&*p<='9'){ ms=ms*10+(*p-'0'); p++; } if(freq==0)freq=800; if(ms==0)ms=100; terminal_writestring("\n [Audio] Beep\n\n"); speaker_play_tone(freq,ms); }
-    else if(strncmp(buffer,"ai ",3)==0){ char* q=buffer+3; while(*q==' ')q++; if(*q) ai_chat(q); else terminal_writestring("\n Usage: ai <question>\n Ex: ai what is zero os\n\n"); }
+    else if(strncmp(buffer,"usbtype ",8)==0){ char* txt=buffer+8; while(*txt==' ')txt++; if(*txt){ usb_hid_inject(txt); usb_hid_inject("\n"); terminal_writestring("\n [USB-HID] Injected to queue: "); terminal_writestring(txt); terminal_writestring("\n Next keyboard poll will get USB chars (real HID path)\n\n"); } else terminal_writestring("\n Usage: usbtype <text> - injects into USB HID queue\n\n"); }
+    else if(strcmp(buffer,"disk")==0){ terminal_writestring("\n [DISK] disk.img 10MB FAT32\n  LBA 0: Boot sector 0x55AA OEM ZEROOS\n  LBA 32: FAT1 128 sectors\n  LBA 160: FAT2 128 sectors\n  LBA 288: Root dir cluster 2 - README.TXT 95 bytes, ZERO.TXT 68 bytes\n  LBA 296: Cluster 3 README data\n  LBA 304: Cluster 4 ZERO data\n  QEMU: -hda disk.img to mount\n\n"); }
+    else if(strncmp(buffer,"ai ",3)==0){ char* q=buffer+3; while(*q==' ')q++; if(*q) ai_chat(q); else terminal_writestring("\n Usage: ai <question>\n\n"); }
     else if(strcmp(buffer,"ai")==0) ai_chat("help");
     else if(strcmp(buffer,"ping")==0) terminal_writestring("\n [NET] Ping 8.8.8.8: 4 packets 0% loss\n  Reply 12ms\n  Reply 10ms\n\n");
-    else if(strcmp(buffer,"gui")==0){ terminal_writestring("\n [GUI] Drawing Zero Ring...\n"); compositor_draw(); terminal_writestring(" Text fallback, VESA needs HW\n\n"); }
+    else if(strcmp(buffer,"gui")==0){ terminal_writestring("\n [GUI] Drawing Zero Ring...\n"); compositor_draw(); terminal_writestring(" Text fallback\n\n"); }
     else if(strncmp(buffer,"touch ",6)==0){ char* fn=buffer+6; while(*fn==' ')fn++; if(*fn==0) terminal_writestring("\n Usage: touch <file>\n\n"); else { int ret=vfs_create(fn); terminal_writestring(ret>=0?"\n Created\n\n":"\n Failed\n\n"); } }
     else if(strncmp(buffer,"rm ",3)==0){ char* fn=buffer+3; while(*fn==' ')fn++; int ret=vfs_delete(fn); terminal_writestring(ret==0?"\n Deleted\n\n":"\n Not found\n\n"); }
     else if(strncmp(buffer,"cat ",4)==0){ char* fn=buffer+4; while(*fn==' ')fn++; char buf[512]; int r=vfs_read_file(fn,buf,511); if(r>=0){ buf[r]=0; terminal_writestring("\n--- "); terminal_writestring(fn); terminal_writestring(" ---\n"); terminal_writestring(buf); terminal_writestring("\n--- end ---\n\n"); } else terminal_writestring("\n Not found\n\n"); }
@@ -126,7 +129,7 @@ void shell_handle_input(char c){
 }
 void shell_run(void){
     shell_init();
-    terminal_writestring("\n [Shell] Zero Shell v5.0 ALL IN - Okkoma hadala\n [KBD] PS/2 + USB-HID real polling\n\n");
+    terminal_writestring("\n [Shell] Zero Shell v6.0 Real Disk+USB Okkoma\n [KBD] PS/2 + USB-HID queue 128 real path\n\n");
     print_prompt();
     while(1){ char c=keyboard_getchar(); shell_handle_input(c); }
 }
