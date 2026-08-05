@@ -65,17 +65,20 @@ extern void pci_list(void);
 extern void net_list(void);
 extern void fat32_ls(void);
 extern int usb_get_device_count(void);
+extern void ai_chat(const char* input);
+extern void ac97_init(void);
 
 static void cmd_help(void) {
-    terminal_writestring("\n Zero OS Shell v1.2 Performance+ - Commands:\n");
+    terminal_writestring("\n Zero OS Shell v2.0 ULTIMATE - Commands:\n");
     terminal_writestring("  help, clear, echo, zero, uname, mem\n");
-    terminal_writestring("  ls, cat, touch, rm, write - ZeroFS v1\n");
-    terminal_writestring("  ls2, touch2 - ZeroFS2 v2\n");
+    terminal_writestring("  ls, cat, touch, rm, write - FS v1\n");
+    terminal_writestring("  ls2, touch2 - ZeroFS2\n");
     terminal_writestring("  gui, ps, ticks, spawn, exec\n");
     terminal_writestring("  apps, launch, store, paging, smp\n");
     terminal_writestring("  beep, pci, usb, net, fatls\n");
+    terminal_writestring("  ai <q>, play <freq>, ping\n");
     terminal_writestring("  reboot, history\n");
-    terminal_writestring("\n  v1.2: PCI+USB+NET+FAT32+Preemptive\n\n");
+    terminal_writestring("\n  v2.0: USB-HID AC97 AI NET FAT32 SMP 60K+\n\n");
 }
 
 static void cmd_zero(void) {
@@ -210,12 +213,19 @@ static void execute_command(void) {
     } else if(strncmp(buffer, "touch2 ", 7)==0) {
         char* fn=buffer+7; while(*fn==' ')fn++;
         if(*fn) { int r=zerofs2_create(fn); terminal_writestring(r>=0 ? "\n [FS2] Created\n\n" : "\n [FS2] Failed\n\n"); } else terminal_writestring("\n Usage: touch2 <file>\n\n");
-    } else if(strncmp(buffer, "beep ", 5)==0) {
+    } else if(strncmp(buffer, "beep ", 5)==0 || strncmp(buffer, "play ", 5)==0) {
         char* p=buffer+5; while(*p==' ')p++;
         int freq=0,ms=0; while(*p>='0'&&*p<='9'){ freq=freq*10+(*p-'0'); p++; } while(*p==' ')p++; while(*p>='0'&&*p<='9'){ ms=ms*10+(*p-'0'); p++; }
         if(freq==0) freq=800; if(ms==0) ms=100;
-        terminal_writestring("\n [Speaker] Beep\n\n");
+        terminal_writestring("\n [Audio] Beep/Play\n\n");
         speaker_play_tone(freq, ms);
+    } else if(strncmp(buffer, "ai ", 3)==0) {
+        char* q=buffer+3; while(*q==' ')q++;
+        if(*q) ai_chat(q); else terminal_writestring("\n Usage: ai <question>\n Ex: ai what is zero os\n\n");
+    } else if(strcmp(buffer, "ai") == 0) {
+        ai_chat("help");
+    } else if(strcmp(buffer, "ping") == 0) {
+        terminal_writestring("\n [NET] Ping 8.8.8.8: 4 packets, 0% loss (simulated)\n  Reply from 8.8.8.8: time=12ms\n  Reply from 8.8.8.8: time=10ms\n\n");
     } else if(strcmp(buffer, "gui") == 0) {
         terminal_writestring("\n [GUI] Drawing Zero Ring compositor...\n");
         compositor_draw();

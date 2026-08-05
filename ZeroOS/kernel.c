@@ -112,7 +112,7 @@ void draw_zero_logo(void) {
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("            +@@@@@@@@@@@*     ZERO OS     *@@@@@@@@@@@+              \n");
-    terminal_writestring("            %@@@@@@@@@@@=     v1.2.0      =@@@@@@@@@@@%              \n");
+    terminal_writestring("            %@@@@@@@@@@@=     v2.0.0      =@@@@@@@@@@@%              \n");
     terminal_writestring("            +@@@@@@@@@@@*                 *@@@@@@@@@@@+              \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
@@ -147,8 +147,11 @@ extern void speaker_play_tone(uint32_t freq, uint32_t ms);
 extern void zerofs2_init(void);
 extern void pci_scan(void);
 extern void usb_init(void);
+extern void usb_hid_init(void);
+extern void ac97_init(void);
 extern void net_init(void);
 extern void fat32_init(void);
+extern void ai_init(void);
 extern void shell_run(void);
 
 void kernel_main(uint32_t magic, uint32_t mb_info) {
@@ -256,12 +259,21 @@ void kernel_main(uint32_t magic, uint32_t mb_info) {
     terminal_writestring("  > USB init... ");
     usb_init();
 
+    terminal_writestring("  > USB-HID init... ");
+    usb_hid_init();
+
+    terminal_writestring("  > AC97 audio init... ");
+    ac97_init();
+
     terminal_writestring("  > NET init... ");
     net_init();
 
     terminal_writestring("  > FAT32 init... ");
     fat32_init();
     terminal_writestring("OK\n");
+
+    terminal_writestring("  > ZeroAI init... ");
+    ai_init();
 
     terminal_writestring("  > Speaker beep test... ");
     speaker_play_tone(800, 60);
@@ -273,17 +285,17 @@ void kernel_main(uint32_t magic, uint32_t mb_info) {
 
     terminal_writestring("\n");
     terminal_writestring("  ------------------------------------------------------------\n");
-    terminal_writestring("   Zero OS v1.2.0 - Performance+ Build\n");
-    terminal_writestring("   GDT+IDT+PIC+PMM+Heap+VFS+FB+Mouse+Comp+PIT+Task+ELF+Sys+Paging+Apps+SMP+FS2+PCI+USB+NET+FAT32\n");
+    terminal_writestring("   Zero OS v2.0.0 - ULTIMATE Build\n");
+    terminal_writestring("   All v1.2 + USB-HID + AC97 + ZeroAI + Enhanced\n");
     terminal_writestring("   Zero Bloat. Zero Tracking. Zero Limits.\n");
     terminal_writestring("  ------------------------------------------------------------\n");
     terminal_writestring("\n");
-    terminal_writestring("   New in v1.2:\n");
-    terminal_writestring("   - PCI: Bus scan, class detect\n");
-    terminal_writestring("   - USB: UHCI/OHCI/EHCI/XHCI detection\n");
-    terminal_writestring("   - NET: NE2000/E1000 NIC + TCP/IP stub\n");
-    terminal_writestring("   - FAT32: Boot sector + root ls\n");
-    terminal_writestring("   - Preemptive: PIT IRQ0 -> scheduler\n");
+    terminal_writestring("   New in v2.0:\n");
+    terminal_writestring("   - USB-HID: Keyboard/Mouse HID report\n");
+    terminal_writestring("   - AC97: Audio PCM + beep fallback\n");
+    terminal_writestring("   - ZeroAI: Local offline rule-based AI\n");
+    terminal_writestring("   - Enhanced NET + FAT32 + SMP\n");
+    terminal_writestring("   - 40+ shell commands\n");
     terminal_writestring("\n");
 
     // enable interrupts

@@ -3,7 +3,7 @@ CFLAGS = -ffreestanding -fno-builtin -fno-stack-protector -nostartfiles -nodefau
 BOOT_CFLAGS = -ffreestanding -c
 
 LDFLAGS = -n -T linker.ld
-OBJECTS = boot.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o pit.o paging.o speaker.o smp.o context.o pci.o usb.o net.o fs/ata.o fs/ramfs.o fs/vfs.o fs/zerofs2.o fs/fat32.o gui/fb.o gui/mouse.o gui/compositor.o userland/elf.o userland/syscall.o userland/task.o userland/app.o
+OBJECTS = boot.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o pit.o paging.o speaker.o smp.o context.o pci.o usb.o usb_hid.o ac97.o net.o fs/ata.o fs/ramfs.o fs/vfs.o fs/zerofs2.o fs/fat32.o gui/fb.o gui/mouse.o gui/compositor.o userland/elf.o userland/syscall.o userland/task.o userland/app.o ai.o
 KERNEL = zero-kernel.elf
 
 all: kernel
@@ -20,7 +20,7 @@ kernel.o: kernel.c
 keyboard.o: keyboard.c keyboard.h io.h
 	$(CC) $(CFLAGS) keyboard.c -o keyboard.o
 
-shell.o: shell.c shell.h io.h keyboard.h heap.h pmm.h fs/vfs.h gui/compositor.h userland/task.h userland/app.h paging.h pci.h
+shell.o: shell.c shell.h io.h keyboard.h heap.h pmm.h fs/vfs.h gui/compositor.h userland/task.h userland/app.h paging.h pci.h ai.h
 	$(CC) $(CFLAGS) shell.c -o shell.o
 
 gdt.o: gdt.c gdt.h io.h
@@ -56,8 +56,17 @@ pci.o: pci.c pci.h io.h
 usb.o: usb.c usb.h pci.h io.h
 	$(CC) $(CFLAGS) usb.c -o usb.o
 
+usb_hid.o: usb_hid.c usb_hid.h usb.h io.h
+	$(CC) $(CFLAGS) usb_hid.c -o usb_hid.o
+
+ac97.o: ac97.c ac97.h pci.h speaker.h io.h
+	$(CC) $(CFLAGS) ac97.c -o ac97.o
+
 net.o: net.c net.h pci.h io.h
 	$(CC) $(CFLAGS) net.c -o net.o
+
+ai.o: ai.c ai.h fs/vfs.h io.h
+	$(CC) $(CFLAGS) ai.c -o ai.o
 
 fs/ata.o: fs/ata.c fs/ata.h io.h
 	$(CC) $(CFLAGS) fs/ata.c -o fs/ata.o
@@ -97,7 +106,7 @@ userland/app.o: userland/app.h userland/app.c heap.h io.h
 
 kernel: $(OBJECTS)
 	ld $(LDFLAGS) -o $(KERNEL) $(OBJECTS)
-	@echo "✅ Zero OS v1.2 Performance+ Build: $(KERNEL)"
+	@echo "✅ Zero OS v2.0 Ultimate Build: $(KERNEL)"
 	@ls -lh $(KERNEL)
 	@file $(KERNEL) || true
 	@echo "Size: $$(du -h $(KERNEL) | cut -f1)"
