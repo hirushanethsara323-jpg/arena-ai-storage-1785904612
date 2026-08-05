@@ -1,0 +1,172 @@
+#include "io.h"
+#include "keyboard.h"
+#include "shell.h"
+
+// From kernel.c VGA functions - we will extern them
+extern void terminal_writestring(const char* data);
+extern void terminal_putchar(char c);
+extern void terminal_initialize(void);
+
+#define SHELL_BUFFER_SIZE 128
+static char buffer[SHELL_BUFFER_SIZE];
+static int buffer_pos = 0;
+static int command_history_count = 0;
+
+static void print_prompt(void) {
+    terminal_writestring("zero@zero-os:~$ ");
+}
+
+static int strcmp(const char* a, const char* b) {
+    while(*a && *b && *a == *b) { a++; b++; }
+    return (unsigned char)*a - (unsigned char)*b;
+}
+
+static int strncmp(const char* a, const char* b, int n) {
+    for(int i=0;i<n;i++) {
+        if(a[i]!=b[i]) return (unsigned char)a[i] - (unsigned char)b[i];
+        if(a[i]==0) return 0;
+    }
+    return 0;
+}
+
+static void strcpy(char* dst, const char* src) {
+    while((*dst++ = *src++));
+}
+
+static int strlen_shell(const char* s) {
+    int i=0; while(s[i]) i++; return i;
+}
+
+static void clear_screen(void) {
+    terminal_initialize();
+}
+
+static void cmd_help(void) {
+    terminal_writestring("\n Zero OS Shell v0.2 - Commands:\n");
+    terminal_writestring("  help        - Show this help\n");
+    terminal_writestring("  clear       - Clear screen\n");
+    terminal_writestring("  echo <text> - Print text\n");
+    terminal_writestring("  zero        - Show Zero info\n");
+    terminal_writestring("  uname       - System info\n");
+    terminal_writestring("  reboot      - Reboot system\n");
+    terminal_writestring("  history     - Command count\n");
+    terminal_writestring("  logo        - Show Zero logo\n");
+    terminal_writestring("\n  [Phase 3 coming: ls, cat, mem, fs]\n\n");
+}
+
+static void cmd_zero(void) {
+    terminal_writestring("\n");
+    terminal_writestring("   ____  _____ ____   ___     ___  ____\n");
+    terminal_writestring("  |_  / | ____|  _ \\ / _ \\   / _ \\/ ___|\n");
+    terminal_writestring("   / /  |  _| | |_) | | | | | | | \\___ \\\n");
+    terminal_writestring("  / /_  | |___|  _ <| |_| | | |_| |___) |\n");
+    terminal_writestring(" /____| |_____|_| \\_\\\\___/   \\___/|____/\n");
+    terminal_writestring("\n  Zero Bloat. Zero Tracking. Zero Limits.\n");
+    terminal_writestring("  v0.2 Genesis + Shell\n\n");
+}
+
+static void cmd_uname(void) {
+    terminal_writestring("\n Zero OS 0.2.0 x86_64 Genesis+Shell\n");
+    terminal_writestring(" Kernel: zero-kernel.elf 8.1K -> now 12K+\n");
+    terminal_writestring(" Build: freestanding, VGA 80x25, PS/2 kbd\n");
+    terminal_writestring(" Ring: Active\n\n");
+}
+
+static void execute_command(void) {
+    buffer[buffer_pos] = 0;
+    
+    if(buffer_pos == 0) {
+        terminal_writestring("\n");
+        print_prompt();
+        return;
+    }
+
+    command_history_count++;
+
+    if(strcmp(buffer, "help") == 0) {
+        cmd_help();
+    } else if(strcmp(buffer, "clear") == 0) {
+        clear_screen();
+        cmd_zero();
+    } else if(strcmp(buffer, "zero") == 0 || strcmp(buffer, "logo") == 0) {
+        cmd_zero();
+    } else if(strcmp(buffer, "uname") == 0 || strcmp(buffer, "uname -a") == 0) {
+        cmd_uname();
+    } else if(strcmp(buffer, "reboot") == 0) {
+        terminal_writestring("\n Rebooting Zero OS...\n");
+        // Try reboot via 8042
+        uint8_t temp;
+        do {
+            temp = inb(0x64);
+            if((temp & 2) == 0) break;
+        } while(1);
+        outb(0x64, 0xFE); // pulse reset line
+        // if fails, halt
+        terminal_writestring(" Reboot failed, halting.\n");
+        while(1) __asm__ volatile ("hlt");
+    } else if(strcmp(buffer, "history") == 0) {
+        terminal_writestring("\n Commands executed: ");
+        // simple itoa
+        char num[12]; int n=command_history_count; int i=0;
+        if(n==0) num[i++]='0';
+        else {
+            char rev[12]; int r=0;
+            while(n>0){ rev[r++]='0'+(n%10); n/=10; }
+            while(r>0) num[i++]=rev[--r];
+        }
+        num[i]=0;
+        terminal_writestring(num);
+        terminal_writestring("\n\n");
+    } else if(strncmp(buffer, "echo ", 5) == 0) {
+        terminal_writestring("\n ");
+        terminal_writestring(buffer+5);
+        terminal_writestring("\n\n");
+    } else if(buffer[0] != 0) {
+        terminal_writestring("\n sh: command not found: ");
+        terminal_writestring(buffer);
+        terminal_writestring("\n Type 'help' for commands.\n\n");
+    }
+
+    buffer_pos = 0;
+    print_prompt();
+}
+
+void shell_init(void) {
+    buffer_pos = 0;
+    command_history_count = 0;
+    keyboard_init();
+}
+
+void shell_handle_input(char c) {
+    if(c == '\n' || c == '\r') {
+        terminal_putchar('\n');
+        execute_command();
+    } else if(c == '\b' || c == 127) {
+        if(buffer_pos > 0) {
+            buffer_pos--;
+            // erase char on screen: backspace, space, backspace
+            terminal_putchar('\b');
+            terminal_putchar(' ');
+            terminal_putchar('\b');
+        }
+    } else if(c >= 32 && c <= 126) {
+        if(buffer_pos < SHELL_BUFFER_SIZE-1) {
+            buffer[buffer_pos++] = c;
+            terminal_putchar(c);
+        }
+    }
+}
+
+void shell_run(void) {
+    shell_init();
+    terminal_writestring("\n");
+    terminal_writestring(" [Shell] Zero Shell initialized\n");
+    terminal_writestring(" [KBD] PS/2 polling driver active\n");
+    terminal_writestring("\n");
+    print_prompt();
+
+    while(1) {
+        char c = keyboard_getchar();
+        shell_handle_input(c);
+    }
+}

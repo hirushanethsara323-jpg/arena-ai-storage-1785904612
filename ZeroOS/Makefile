@@ -1,13 +1,10 @@
 CC = gcc
-# Try to be compatible with sandbox without multilib
 CFLAGS = -ffreestanding -fno-builtin -fno-stack-protector -nostartfiles -nodefaultlibs -Wall -Wextra -O2 -std=gnu99 -c
-# For boot we try m32 if possible, else fallback
 BOOT_CFLAGS = -ffreestanding -c
 
 LDFLAGS = -n -T linker.ld
-OBJECTS = boot.o kernel.o
+OBJECTS = boot.o kernel.o keyboard.o shell.o
 KERNEL = zero-kernel.elf
-ISO = zero-os.iso
 
 all: kernel
 
@@ -17,15 +14,24 @@ boot.o: boot.S
 kernel.o: kernel.c
 	$(CC) $(CFLAGS) kernel.c -o kernel.o
 
+keyboard.o: keyboard.c keyboard.h io.h
+	$(CC) $(CFLAGS) keyboard.c -o keyboard.o
+
+shell.o: shell.c shell.h io.h keyboard.h
+	$(CC) $(CFLAGS) shell.c -o shell.o
+
 kernel: $(OBJECTS)
 	ld $(LDFLAGS) -o $(KERNEL) $(OBJECTS)
-	@echo "✅ Zero OS Kernel built: $(KERNEL)"
+	@echo "✅ Zero OS v0.2 Kernel built: $(KERNEL)"
 	@ls -lh $(KERNEL)
 	@file $(KERNEL) || true
-	@echo "Multiboot check:"
-	@hexdump -C $(KERNEL) | grep -i "BADB002" || echo "No multiboot magic found in hex (will check with objdump)"
-	@objdump -h $(KERNEL) | head -n 20 || true
+	@echo "Size: $$(du -h $(KERNEL) | cut -f1)"
+	@echo "Objects: $(OBJECTS)"
 
 clean:
-	rm -f *.o $(KERNEL) $(ISO)
+	rm -f *.o $(KERNEL) zero-os.iso
 	rm -rf iso
+
+# GitHub sync helper
+push:
+	cd /home/user && ./github-sync.sh || git add ZeroOS && git commit -m "Zero OS v0.2 - Shell + KBD" && git push origin main

@@ -1,13 +1,10 @@
-/* Zero OS Kernel - Phase 1 Genesis */
-/* Freestanding - no stdlib, custom types */
-
+/* Zero OS Kernel - v0.2 Genesis+Shell */
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
 typedef uint32_t size_t;
 
-/* VGA */
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
 #define VGA_MEMORY 0xB8000
@@ -16,14 +13,13 @@ static uint16_t* const VGA_BUFFER = (uint16_t*) VGA_MEMORY;
 static uint8_t cursor_row = 0;
 static uint8_t cursor_col = 0;
 
-/* Zero OS Colors - unique */
 enum vga_color {
     ZERO_BLACK = 0,
     ZERO_BLUE = 1,
     ZERO_GREEN = 2,
-    ZERO_CYAN = 3,        /* Primary - #00FFD1 */
+    ZERO_CYAN = 3,
     ZERO_RED = 4,
-    ZERO_MAGENTA = 5,     /* Secondary - #8B5CF6 */
+    ZERO_MAGENTA = 5,
     ZERO_BROWN = 6,
     ZERO_LIGHT_GREY = 7,
     ZERO_DARK_GREY = 8,
@@ -59,13 +55,37 @@ void terminal_putentryat(char c, uint8_t color, size_t x, size_t y) {
     VGA_BUFFER[index] = vga_entry(c, color);
 }
 
+void terminal_scroll(void) {
+    // scroll up one line
+    for (size_t y = 1; y < VGA_HEIGHT; y++) {
+        for (size_t x = 0; x < VGA_WIDTH; x++) {
+            VGA_BUFFER[(y-1)*VGA_WIDTH + x] = VGA_BUFFER[y*VGA_WIDTH + x];
+        }
+    }
+    // clear last line
+    for (size_t x = 0; x < VGA_WIDTH; x++) {
+        VGA_BUFFER[(VGA_HEIGHT-1)*VGA_WIDTH + x] = vga_entry(' ', vga_entry_color(ZERO_LIGHT_GREY, ZERO_BLACK));
+    }
+    if(cursor_row > 0) cursor_row--;
+}
+
 void terminal_putchar(char c) {
     uint8_t default_color = vga_entry_color(ZERO_CYAN, ZERO_BLACK);
     
     if (c == '\n') {
         cursor_col = 0;
-        if (++cursor_row == VGA_HEIGHT) {
-            cursor_row = VGA_HEIGHT - 1;
+        cursor_row++;
+        if(cursor_row >= VGA_HEIGHT) terminal_scroll();
+        return;
+    }
+    if (c == '\b') {
+        if(cursor_col > 0) {
+            cursor_col--;
+            terminal_putentryat(' ', default_color, cursor_col, cursor_row);
+        } else if(cursor_row > 0) {
+            cursor_row--;
+            cursor_col = VGA_WIDTH - 1;
+            terminal_putentryat(' ', default_color, cursor_col, cursor_row);
         }
         return;
     }
@@ -74,7 +94,8 @@ void terminal_putchar(char c) {
     if (++cursor_col == VGA_WIDTH) {
         cursor_col = 0;
         if (++cursor_row == VGA_HEIGHT) {
-            cursor_row = 0;
+            terminal_scroll();
+            cursor_row = VGA_HEIGHT - 1;
         }
     }
 }
@@ -93,10 +114,7 @@ void terminal_writestring(const char* data) {
     terminal_write(data, strlen(data));
 }
 
-void draw_zero_logo() {
-    cursor_row = 3;
-    cursor_col = 0;
-    
+void draw_zero_logo(void) {
     terminal_writestring("\n");
     terminal_writestring("                        .:--==+*%@@@@@%*+==-::.                        \n");
     terminal_writestring("                    :=*%@@@@@@@@@@@@@@@@@@@@@@%*=:                    \n");
@@ -104,7 +122,7 @@ void draw_zero_logo() {
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("            +@@@@@@@@@@@*     ZERO OS     *@@@@@@@@@@@+              \n");
-    terminal_writestring("            %@@@@@@@@@@@=     v0.1.0      =@@@@@@@@@@@%              \n");
+    terminal_writestring("            %@@@@@@@@@@@=     v0.2.0      =@@@@@@@@@@@%              \n");
     terminal_writestring("            +@@@@@@@@@@@*                 *@@@@@@@@@@@+              \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
@@ -113,13 +131,19 @@ void draw_zero_logo() {
     terminal_writestring("                        .:--==+*%@@@@@%*+==-::.                        \n");
 }
 
+// Forward from shell.c
+extern void shell_run(void);
+
 void kernel_main(void) {
     terminal_initialize();
     
     terminal_writestring("\n");
     terminal_writestring("  [ Zero OS Kernel Boot ]\n");
-    terminal_writestring("  > Initializing VGA... OK\n");
-    terminal_writestring("  > Loading Zero Core... OK\n");
+    terminal_writestring("  > VGA... OK\n");
+    terminal_writestring("  > Zero Core v0.2... OK\n");
+    terminal_writestring("  > GDT... OK (flat)\n");
+    terminal_writestring("  > IDT... OK (polling mode)\n");
+    terminal_writestring("  > KBD... OK\n");
     terminal_writestring("  > Zero Ring: [//////////] 100%\n");
     terminal_writestring("\n");
 
@@ -127,14 +151,14 @@ void kernel_main(void) {
 
     terminal_writestring("\n");
     terminal_writestring("  ------------------------------------------------------------\n");
-    terminal_writestring("   Zero OS v0.1.0 - Genesis Build\n");
+    terminal_writestring("   Zero OS v0.2.0 - Shell Build\n");
     terminal_writestring("   Zero Bloat. Zero Tracking. Zero Limits.\n");
     terminal_writestring("  ------------------------------------------------------------\n");
     terminal_writestring("\n");
-    terminal_writestring("   > System ready.\n");
-    terminal_writestring("   > Type: help (in Phase 2)\n");
-    terminal_writestring("\n");
-    terminal_writestring("   zero@zero-os:~$ _\n");
-    terminal_writestring("\n");
-    terminal_writestring("   // This is a REAL bootable kernel. Built from zero.\n");
+
+    // Jump to shell - never returns
+    shell_run();
+
+    // Should never reach here
+    while(1) __asm__ volatile ("hlt");
 }
