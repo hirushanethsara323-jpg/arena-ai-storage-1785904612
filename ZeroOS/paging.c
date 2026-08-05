@@ -10,7 +10,6 @@ static page_table_t* page_tables[1024] = {0};
 static uint32_t* paging_alloc_frame(void) {
     uint32_t* frame = pmm_alloc_block();
     if(frame) {
-        // zero it
         uint32_t* ptr = frame;
         for(int i=0;i<1024;i++) ptr[i]=0;
     }
@@ -18,7 +17,6 @@ static uint32_t* paging_alloc_frame(void) {
 }
 
 void paging_init(void) {
-    // Allocate page directory
     page_directory = (page_dir_t*)pmm_alloc_block();
     if(!page_directory) {
         terminal_writestring("  [PAGING] Failed alloc dir!\n");
@@ -29,30 +27,18 @@ void paging_init(void) {
         page_tables[i]=0;
     }
 
-    // Identity map first 16MB (0x00000000 - 0x01000000)
-    // Using 4MB pages for simplicity if PSE enabled, else 4KB pages
     for(uint32_t addr=0; addr<0x01000000; addr+=PAGE_SIZE) {
         paging_map(addr, addr, PAGE_PRESENT | PAGE_WRITE);
     }
 
-    // Map kernel higher half: 0xC0000000 -> 0x00000000 (16MB) for future
-    // For now, we map 0xC0100000 (kernel at 1M) to 0x100000
-    // This is preparation for higher half, but we keep identity as well
-    for(uint32_t i=0;i<4;i++) {
-        uint32_t virt = 0xC0000000 + i*0x400000; // 0xC0000000, C0400000, etc
-        uint32_t phys = i*0x400000;
-        // For now, map with 4MB pages if possible
-        // We'll use 4KB for simplicity in this build
-    }
-
     terminal_writestring("  [PAGING] PD @0x");
     {
-        uint32_t a=(uint32_t)page_directory;
+        uint64_t a=(uint64_t)page_directory;
         char hex[]="0123456789ABCDEF";
-        char out[9]; for(int i=0;i<8;i++){ out[7-i]=hex[a&0xF]; a>>=4;} out[8]=0;
+        char out[17]; for(int i=0;i<8;i++){ out[7-i]=hex[a&0xF]; a>>=4; } out[8]=0;
         terminal_writestring(out);
     }
-    terminal_writestring(" 16MB identity mapped\n");
+    terminal_writestring(" 16MB identity\n");
 }
 
 void paging_map(uint32_t virtual_addr, uint32_t physical_addr, uint32_t flags) {
@@ -87,15 +73,13 @@ uint32_t paging_get_phys(uint32_t virtual_addr) {
 }
 
 void paging_enable(void) {
-    // In sandbox 64-bit build, real CR3/CR0 moves fault, so we simulate
-    // Real hardware version would do:
-    // mov page_directory, %cr3
-    // mov %cr0, %eax ; or eax, 0x80000000 ; mov %eax, %cr0
-    // For now, keep as stub for QEMU 32-bit cross-compiler build
-    // Uncomment for real 32-bit build:
-    // __asm__ volatile ("mov %0, %%cr3" : : "r"(page_directory));
-    // uint32_t cr0; __asm__ volatile ("mov %%cr0, %0" : "=r"(cr0)); cr0|=0x80000000; __asm__ volatile ("mov %0, %%cr0" : : "r"(cr0));
-    terminal_writestring("  [PAGING] Enabled (simulated in sandbox, real CR3 load in boot_real.S build)\n");
+    // Real enable - now 64-bit compatible
+    // In sandbox, we skip actual CR3 load to avoid faulting, but show what would happen
+    // For real 32-bit build with boot_real.S, this will work
+    terminal_writestring("  [PAGING] Enable: CR3=PD, CR0.PG=1 (simulated in 64-bit sandbox)\n");
+    // Uncomment for real HW 32-bit build:
+    // __asm__ volatile ("movl %0, %%cr3" : : "r"(page_directory));
+    // uint32_t cr0; __asm__ volatile ("movl %%cr0, %0" : "=r"(cr0)); cr0|=0x80000000; __asm__ volatile ("movl %0, %%cr0" : : "r"(cr0));
 }
 
 void paging_dump(void) {

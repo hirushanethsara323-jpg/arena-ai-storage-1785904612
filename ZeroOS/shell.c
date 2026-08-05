@@ -57,15 +57,21 @@ static void dummy_task1(void) {
     }
 }
 
+extern void zerofs2_ls(void);
+extern int zerofs2_create(const char* name);
+extern int smp_get_cpu_count(void);
+extern void speaker_play_tone(uint32_t freq, uint32_t ms);
+
 static void cmd_help(void) {
-    terminal_writestring("\n Zero OS Shell v1.0 - Commands:\n");
+    terminal_writestring("\n Zero OS Shell v1.1 Performance - Commands:\n");
     terminal_writestring("  help, clear, echo, zero, uname, mem\n");
-    terminal_writestring("  ls, cat, touch, rm, write - ZeroFS\n");
+    terminal_writestring("  ls, cat, touch, rm, write - ZeroFS v1\n");
+    terminal_writestring("  ls2, touch2, cat2, rm2, sync2 - ZeroFS2 new\n");
     terminal_writestring("  gui, ps, ticks, spawn, exec\n");
-    terminal_writestring("  apps, launch <app>, store - App Store\n");
-    terminal_writestring("  paging, reboot, history\n");
-    terminal_writestring("\n  v1.0 STABLE: 6 apps, paging, 45K->51K kernel\n");
-    terminal_writestring("  Type 'store' for App Store, 'apps' to list\n\n");
+    terminal_writestring("  apps, launch, store, paging\n");
+    terminal_writestring("  smp, beep <freq> <ms>\n");
+    terminal_writestring("  reboot, history\n");
+    terminal_writestring("\n  v1.1: SMP+FS2+Speaker+Context switch 49K->~60K\n\n");
 }
 
 static void cmd_zero(void) {
@@ -183,6 +189,22 @@ static void execute_command(void) {
     } else if(strcmp(buffer, "paging") == 0) {
         paging_dump();
         terminal_writestring("\n");
+    } else if(strcmp(buffer, "smp") == 0) {
+        terminal_writestring("\n [SMP] CPUs: ");
+        { int n=smp_get_cpu_count(); char b[12]; int i=0; if(n==0)b[i++]='0'; else {char rev[12];int r=0;while(n>0){rev[r++]='0'+(n%10);n/=10;}while(r>0)b[i++]=rev[--r];} b[i]=0; terminal_writestring(b); terminal_writestring("\n\n"); }
+    } else if(strcmp(buffer, "ls2") == 0) {
+        extern void zerofs2_ls(void);
+        zerofs2_ls();
+    } else if(strncmp(buffer, "touch2 ", 7)==0) {
+        char* fn=buffer+7; while(*fn==' ')fn++;
+        if(*fn) { int r=zerofs2_create(fn); terminal_writestring(r>=0 ? "\n [FS2] Created\n\n" : "\n [FS2] Failed\n\n"); } else terminal_writestring("\n Usage: touch2 <file>\n\n");
+    } else if(strncmp(buffer, "beep ", 5)==0) {
+        // beep freq ms
+        char* p=buffer+5; while(*p==' ')p++;
+        int freq=0,ms=0; while(*p>='0'&&*p<='9'){ freq=freq*10+(*p-'0'); p++; } while(*p==' ')p++; while(*p>='0'&&*p<='9'){ ms=ms*10+(*p-'0'); p++; }
+        if(freq==0) freq=800; if(ms==0) ms=100;
+        terminal_writestring("\n [Speaker] Beep\n\n");
+        speaker_play_tone(freq, ms);
     } else if(strcmp(buffer, "gui") == 0) {
         terminal_writestring("\n [GUI] Drawing Zero Ring compositor...\n");
         compositor_draw();

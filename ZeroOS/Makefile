@@ -3,7 +3,7 @@ CFLAGS = -ffreestanding -fno-builtin -fno-stack-protector -nostartfiles -nodefau
 BOOT_CFLAGS = -ffreestanding -c
 
 LDFLAGS = -n -T linker.ld
-OBJECTS = boot.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o pit.o paging.o fs/ata.o fs/ramfs.o fs/vfs.o gui/fb.o gui/mouse.o gui/compositor.o userland/elf.o userland/syscall.o userland/task.o userland/app.o
+OBJECTS = boot.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o pit.o paging.o speaker.o smp.o context.o fs/ata.o fs/ramfs.o fs/vfs.o fs/zerofs2.o gui/fb.o gui/mouse.o gui/compositor.o userland/elf.o userland/syscall.o userland/task.o userland/app.o
 KERNEL = zero-kernel.elf
 
 all: kernel
@@ -11,13 +11,16 @@ all: kernel
 boot.o: boot.S
 	$(CC) $(BOOT_CFLAGS) boot.S -o boot.o
 
+context.o: context.S
+	$(CC) $(BOOT_CFLAGS) context.S -o context.o
+
 kernel.o: kernel.c
 	$(CC) $(CFLAGS) kernel.c -o kernel.o
 
 keyboard.o: keyboard.c keyboard.h io.h
 	$(CC) $(CFLAGS) keyboard.c -o keyboard.o
 
-shell.o: shell.c shell.h io.h keyboard.h heap.h pmm.h fs/vfs.h gui/compositor.h userland/task.h userland/app.h
+shell.o: shell.c shell.h io.h keyboard.h heap.h pmm.h fs/vfs.h gui/compositor.h userland/task.h userland/app.h paging.h
 	$(CC) $(CFLAGS) shell.c -o shell.o
 
 gdt.o: gdt.c gdt.h io.h
@@ -41,6 +44,12 @@ pit.o: pit.c pit.h io.h
 paging.o: paging.c paging.h pmm.h heap.h io.h
 	$(CC) $(CFLAGS) paging.c -o paging.o
 
+speaker.o: speaker.c speaker.h pit.h io.h
+	$(CC) $(CFLAGS) speaker.c -o speaker.o
+
+smp.o: smp.c smp.h io.h
+	$(CC) $(CFLAGS) smp.c -o smp.o
+
 fs/ata.o: fs/ata.c fs/ata.h io.h
 	$(CC) $(CFLAGS) fs/ata.c -o fs/ata.o
 
@@ -49,6 +58,9 @@ fs/ramfs.o: fs/ramfs.c fs/ramfs.h heap.h io.h
 
 fs/vfs.o: fs/vfs.c fs/vfs.h fs/ramfs.h fs/ata.h heap.h io.h
 	$(CC) $(CFLAGS) fs/vfs.c -o fs/vfs.o
+
+fs/zerofs2.o: fs/zerofs2.h fs/zerofs2.c fs/ata.h heap.h pmm.h io.h
+	$(CC) $(CFLAGS) fs/zerofs2.c -o fs/zerofs2.o
 
 gui/fb.o: gui/fb.h gui/fb.c io.h
 	$(CC) $(CFLAGS) gui/fb.c -o gui/fb.o
@@ -73,7 +85,7 @@ userland/app.o: userland/app.h userland/app.c heap.h io.h
 
 kernel: $(OBJECTS)
 	ld $(LDFLAGS) -o $(KERNEL) $(OBJECTS)
-	@echo "✅ Zero OS v1.0 Kernel built: $(KERNEL)"
+	@echo "✅ Zero OS v1.1 Performance Build: $(KERNEL)"
 	@ls -lh $(KERNEL)
 	@file $(KERNEL) || true
 	@echo "Size: $$(du -h $(KERNEL) | cut -f1)"

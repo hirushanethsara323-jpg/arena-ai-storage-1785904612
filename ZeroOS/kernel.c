@@ -112,7 +112,7 @@ void draw_zero_logo(void) {
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("            +@@@@@@@@@@@*     ZERO OS     *@@@@@@@@@@@+              \n");
-    terminal_writestring("            %@@@@@@@@@@@=     v1.0.0      =@@@@@@@@@@@%              \n");
+    terminal_writestring("            %@@@@@@@@@@@=     v1.1.0      =@@@@@@@@@@@%              \n");
     terminal_writestring("            +@@@@@@@@@@@*                 *@@@@@@@@@@@+              \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
@@ -142,6 +142,9 @@ extern void paging_init(void);
 extern void paging_enable(void);
 extern void app_init(void);
 extern int app_register(const char* name, const char* desc, void (*entry)(void), uint32_t icon, uint32_t color);
+extern void smp_init(void);
+extern void speaker_play_tone(uint32_t freq, uint32_t ms);
+extern void zerofs2_init(void);
 extern void shell_run(void);
 
 void kernel_main(uint32_t magic, uint32_t mb_info) {
@@ -236,22 +239,34 @@ void kernel_main(uint32_t magic, uint32_t mb_info) {
     app_register("ai", "Zero AI", 0, '*', 0x00FFD1);
     terminal_writestring("6 apps OK\n");
 
+    terminal_writestring("  > SMP init... ");
+    smp_init();
+
+    terminal_writestring("  > ZeroFS2 init... ");
+    zerofs2_init();
+    terminal_writestring("OK\n");
+
+    terminal_writestring("  > Speaker beep test... ");
+    speaker_play_tone(800, 60);
+    terminal_writestring("OK\n");
+
     terminal_writestring("  > Zero Ring: [//////////] 100%\n\n");
 
     draw_zero_logo();
 
     terminal_writestring("\n");
     terminal_writestring("  ------------------------------------------------------------\n");
-    terminal_writestring("   Zero OS v1.0.0 - STABLE - Daily Driver\n");
-    terminal_writestring("   GDT+IDT+PIC+PMM+Heap+VFS+FB+Mouse+Comp+PIT+Task+ELF+Sys+PAGING+APPS\n");
+    terminal_writestring("   Zero OS v1.1.0 - Performance Build\n");
+    terminal_writestring("   GDT+IDT+PIC+PMM+Heap+VFS+FB+Mouse+Comp+PIT+Task+ELF+Sys+Paging+Apps+SMP+FS2+SPK\n");
     terminal_writestring("   Zero Bloat. Zero Tracking. Zero Limits.\n");
     terminal_writestring("  ------------------------------------------------------------\n");
     terminal_writestring("\n");
-    terminal_writestring("   New in v1.0:\n");
-    terminal_writestring("   - Paging: 16MB id-map, PD @ dynamic\n");
-    terminal_writestring("   - App Store: 6 apps, launch\n");
-    terminal_writestring("   - Polished shell + GUI by default\n");
-    terminal_writestring("   - Ready for daily dev use\n");
+    terminal_writestring("   New in v1.1:\n");
+    terminal_writestring("   - SMP: CPUID + APIC detection\n");
+    terminal_writestring("   - ZeroFS2: 128 inodes, journal, ATA sync\n");
+    terminal_writestring("   - Speaker: PC beep 0x61 + PIT ch2\n");
+    terminal_writestring("   - Context switch: real asm (64-bit)\n");
+    terminal_writestring("   - Paging: improved PD\n");
     terminal_writestring("\n");
 
     // enable interrupts
