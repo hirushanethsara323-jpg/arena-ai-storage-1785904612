@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zero OS - v0.1 Genesis</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#0A0A0F;
+    --surface:#15151F;
+    --cyan:#00FFD1;
+    --purple:#8B5CF6;
+    --pink:#FF3B6E;
+    --text:#E8E8EC;
+    --dim:#6B7280;
+  }
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Space Grotesk',sans-serif;
+    overflow:hidden;
+    height:100vh;
+    width:100vw;
+    user-select:none;
+  }
+  /* Boot Screen */
+  #boot{
+    position:fixed;inset:0;
+    background:var(--bg);
+    display:flex;align-items:center;justify-content:center;
+    flex-direction:column;
+    z-index:10000;
+    transition:opacity 1s ease;
+  }
+  #boot.hidden{opacity:0;pointer-events:none}
+  .zero-dot{
+    width:4px;height:4px;background:white;border-radius:50%;
+    animation:dotExpand 2.2s cubic-bezier(.16,1,.3,1) forwards;
+    box-shadow:0 0 0 0 rgba(0,255,209,0.5);
+  }
+  @keyframes dotExpand{
+    0%{width:4px;height:4px;box-shadow:0 0 0 0 rgba(0,255,209,0.8)}
+    30%{width:24px;height:24px;box-shadow:0 0 40px 10px rgba(0,255,209,0.6)}
+    100%{width:220px;height:220px;background:transparent;border:2px solid var(--cyan);box-shadow:0 0 80px 20px rgba(0,255,209,0.3), inset 0 0 40px rgba(139,92,246,0.2)}
+  }
+  .boot-text{
+    margin-top:40px;font-family:'JetBrains Mono',monospace;
+    font-size:13px;color:var(--dim);
+    opacity:0;animation:fadeIn 0.8s 1.2s forwards;
+    text-align:center;line-height:1.8;
+  }
+  .boot-log{color:var(--cyan)}
+  @keyframes fadeIn{to{opacity:1}}
+  
+  /* Desktop */
+  #desktop{
+    position:fixed;inset:0;
+    background:radial-gradient(1200px at 50% -200px, rgba(139,92,246,0.15), transparent),
+               radial-gradient(800px at 80% 80%, rgba(0,255,209,0.08), transparent),
+               var(--bg);
+  }
+  /* Grid dots subtle */
+  #desktop::before{
+    content:'';position:absolute;inset:0;
+    background-image:radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size:32px 32px;
+  }
+  /* Zero Ring - Center */
+  #zero-ring-container{
+    position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%);
+    width:340px;height:340px;
+    display:flex;align-items:center;justify-content:center;
+    pointer-events:none;
+  }
+  #zero-ring{
+    width:200px;height:200px;
+    border:1px solid rgba(0,255,209,0.3);
+    border-radius:50%;
+    position:relative;
+    pointer-events:all;
+    cursor:pointer;
+    transition:all 0.4s cubic-bezier(.16,1,.3,1);
+    display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle, rgba(0,255,209,0.06), transparent 70%);
+    backdrop-filter:blur(12px);
+  }
+  #zero-ring:hover{
+    width:220px;height:220px;
+    border-color:var(--cyan);
+    box-shadow:0 0 60px rgba(0,255,209,0.4), inset 0 0 30px rgba(0,255,209,0.1);
+  }
+  #zero-ring.active{
+    width:320px;height:320px;
+    border-color:var(--purple);
+    box-shadow:0 0 80px rgba(139,92,246,0.5);
+  }
+  #zero-core{
+    width:72px;height:72px;
+    background:linear-gradient(135deg, var(--cyan), var(--purple));
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:24px;color:#000;
+    box-shadow:0 0 30px rgba(0,255,209,0.6);
+    animation:pulse 3s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{transform:scale(1);box-shadow:0 0 30px rgba(0,255,209,0.6)}
+    50%{transform:scale(1.05);box-shadow:0 0 50px rgba(0,255,209,0.8)}
+  }
+  #zero-label{
+    position:absolute;bottom:-40px;left:50%;transform:translateX(-50%);
+    font-family:'JetBrains Mono';font-size:11px;
+    letter-spacing:0.3em;color:var(--dim);
+    opacity:0.6
+  }
+  /* Orbit apps */
+  .orbit-app{
+    position:absolute;
+    width:56px;height:56px;
+    background:rgba(21,21,31,0.9);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;
+    cursor:pointer;
+    transition:all 0.4s cubic-bezier(.16,1,.3,1);
+    opacity:0;transform:translate(-50%,-50%) scale(0);
+    backdrop-filter:blur(20px);
+  }
+  #zero-ring.active .orbit-app{
+    opacity:1;transform:translate(-50%,-50%) scale(1);
+  }
+  .orbit-app:hover{
+    border-color:var(--cyan);
+    box-shadow:0 0 20px rgba(0,255,209,0.4);
+    transform:translate(-50%,-50%) scale(1.15) !important;
+  }
+  .orbit-app::after{
+    content:attr(data-name);
+    position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);
+    font-size:10px;font-family:'JetBrains Mono';color:var(--text);
+    white-space:nowrap;opacity:0.7;
+  }
+  /* Windows */
+  .window{
+    position:absolute;
+    background:rgba(21,21,31,0.92);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:16px;
+    backdrop-filter:blur(40px);
+    box-shadow:0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05) inset;
+    overflow:hidden;
+    display:flex;flex-direction:column;
+    min-width:320px;min-height:200px;
+    transition:box-shadow 0.3s, border-color 0.3s;
+  }
+  .window.focused{
+    border-color:rgba(0,255,209,0.4);
+    box-shadow:0 20px 80px rgba(0,0,0,0.6), 0 0 40px rgba(0,255,209,0.15);
+  }
+  .window-header{
+    height:44px;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 16px;
+    background:rgba(255,255,255,0.02);
+    border-bottom:1px solid rgba(255,255,255,0.06);
+    cursor:grab;
+  }
+  .window-title{
+    font-size:13px;font-weight:600;letter-spacing:0.02em;
+    display:flex;align-items:center;gap:8px;
+  }
+  .window-title span{opacity:0.6;font-weight:400;font-family:'JetBrains Mono';font-size:11px}
+  .window-controls{display:flex;gap:8px}
+  .win-btn{
+    width:12px;height:12px;border-radius:50%;cursor:pointer;
+    transition:transform 0.2s;
+  }
+  .win-btn:hover{transform:scale(1.2)}
+  .close{background:#FF5F57}
+  .min{background:#FFBD2E}
+  .max{background:#28CA42}
+  .window-content{
+    flex:1;overflow:auto;padding:0;
+    font-family:'JetBrains Mono',monospace;
+  }
+  /* Specific apps */
+  .terminal{
+    background:#0A0A0F;
+    padding:16px;
+    font-size:13px;line-height:1.6;
+  }
+  .term-line{margin:2px 0}
+  .term-prompt{color:var(--cyan)}
+  .term-path{color:var(--purple)}
+  .term-input{
+    background:transparent;border:none;outline:none;
+    color:var(--text);font-family:inherit;font-size:inherit;
+    width:60%;
+  }
+  .files-canvas{
+    position:relative;width:100%;height:100%;
+    background:radial-gradient(600px at 30% 20%, rgba(139,92,246,0.08), transparent);
+  }
+  .file-dot{
+    position:absolute;
+    width:64px;height:64px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:50%;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    font-size:20px;cursor:pointer;
+    transition:all 0.3s;
+  }
+  .file-dot:hover{
+    background:rgba(0,255,209,0.1);
+    border-color:var(--cyan);
+    transform:scale(1.1);
+  }
+  .file-dot label{
+    font-size:9px;margin-top:4px;font-family:'Space Grotesk';opacity:0.8
+  }
+  /* Taskbar minimal */
+  #status{
+    position:fixed;top:20px;right:20px;
+    display:flex;gap:12px;align-items:center;
+    font-family:'JetBrains Mono';font-size:11px;
+    color:var(--dim);
+  }
+  .status-dot{
+    width:8px;height:8px;background:var(--cyan);
+    border-radius:50%;box-shadow:0 0 10px var(--cyan);
+    animation:pulse 2s infinite;
+  }
+  /* Welcome hint */
+  #hint{
+    position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+    background:rgba(21,21,31,0.9);
+    border:1px solid rgba(255,255,255,0.1);
+    padding:12px 20px;border-radius:100px;
+    font-size:13px;backdrop-filter:blur(20px);
+    display:flex;gap:12px;align-items:center;
+  }
+  #hint kbd{
+    background:rgba(255,255,255,0.1);padding:2px 8px;
+    border-radius:6px;font-family:'JetBrains Mono';font-size:11px;
+  }
+</style>
+</head>
+<body>
+  <!-- Boot -->
+  <div id="boot">
+    <div class="zero-dot"></div>
+    <div class="boot-text">
+      <div class="boot-log">Zero OS v0.1 Genesis</div>
+      Initializing Zero Ring... OK<br>
+      Loading Zero Core... OK<br>
+      <span style="color:var(--text)">Starting from zero_</span>
+    </div>
+  </div>
+
+  <div id="desktop">
+    <!-- Status -->
+    <div id="status">
+      <div class="status-dot"></div>
+      <span>ZERO OS • zero-kernel.elf • 8.1K • ONLINE</span>
+      <span id="clock">00:00</span>
+    </div>
+
+    <!-- Zero Ring -->
+    <div id="zero-ring-container">
+      <div id="zero-ring">
+        <div id="zero-core">0</div>
+        <div id="zero-label">CLICK TO ORBIT</div>
+        <!-- Orbit Apps placed via JS -->
+        <div class="orbit-app" style="left:50%; top:-18%" data-name="Terminal" data-app="terminal">◍</div>
+        <div class="orbit-app" style="left:95%; top:15%" data-name="Files" data-app="files">◌</div>
+        <div class="orbit-app" style="left:95%; top:85%" data-name="Browser" data-app="browser">◎</div>
+        <div class="orbit-app" style="left:50%; top:118%" data-name="Editor" data-app="editor">✎</div>
+        <div class="orbit-app" style="left:5%; top:85%" data-name="Settings" data-app="settings">⚙</div>
+        <div class="orbit-app" style="left:5%; top:15%" data-name="AI" data-app="ai">✦</div>
+      </div>
+    </div>
+
+    <div id="hint">
+      <span>Click the <strong>0</strong> in center to open</span>
+      <kbd>Zero Ring</kbd>
+      <span>• Drag windows • Drop to center to close</span>
+    </div>
+  </div>
+
+<script>
+const boot = document.getElementById('boot');
+const ring = document.getElementById('zero-ring');
+let zIndex = 10;
+
+// Boot sequence
+setTimeout(()=>{ boot.classList.add('hidden'); }, 2600);
+
+// Clock
+function updateClock(){
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+}
+setInterval(updateClock,1000); updateClock();
+
+// Ring toggle
+ring.addEventListener('click', (e)=>{
+  if(e.target.closest('.orbit-app')) return;
+  ring.classList.toggle('active');
+  document.getElementById('zero-label').textContent = ring.classList.contains('active') ? 'ZERO RING ACTIVE' : 'CLICK TO ORBIT';
+});
+
+// Window system
+function createWindow(app, title, content, w=420, h=300, x=null, y=null){
+  const win = document.createElement('div');
+  win.className = 'window focused';
+  if(x===null) x = 100 + Math.random()*200;
+  if(y===null) y = 80 + Math.random()*120;
+  win.style.left = x+'px';
+  win.style.top = y+'px';
+  win.style.width = w+'px';
+  win.style.height = h+'px';
+  win.style.zIndex = ++zIndex;
+
+  win.innerHTML = `
+    <div class="window-header">
+      <div class="window-title">${title} <span>${app}.zero</span></div>
+      <div class="window-controls">
+        <div class="win-btn min"></div>
+        <div class="win-btn max"></div>
+        <div class="win-btn close"></div>
+      </div>
+    </div>
+    <div class="window-content">${content}</div>
+  `;
+  
+  document.getElementById('desktop').appendChild(win);
+  makeDraggable(win);
+  bringToFront(win);
+
+  win.addEventListener('mousedown', ()=>bringToFront(win));
+  win.querySelector('.close').addEventListener('click', ()=> win.remove());
+  
+  return win;
+}
+
+function bringToFront(el){
+  document.querySelectorAll('.window').forEach(w=>w.classList.remove('focused'));
+  el.classList.add('focused');
+  el.style.zIndex = ++zIndex;
+}
+
+function makeDraggable(el){
+  const header = el.querySelector('.window-header');
+  let sx, sy, ox, oy, dragging=false;
+  header.addEventListener('mousedown', e=>{
+    dragging=true; sx=e.clientX; sy=e.clientY;
+    ox=el.offsetLeft; oy=el.offsetTop;
+    el.style.transition='none';
+  });
+  window.addEventListener('mousemove', e=>{
+    if(!dragging) return;
+    el.style.left = (ox + e.clientX - sx)+'px';
+    el.style.top = (oy + e.clientY - sy)+'px';
+    // check if dropped to center to close
+    const cx = window.innerWidth/2, cy = window.innerHeight/2;
+    const dist = Math.hypot(e.clientX-cx, e.clientY-cy);
+    if(dist < 80){
+      ring.style.transform='scale(1.3)';
+      ring.style.borderColor='rgb(255,59,110)';
+    } else {
+      ring.style.transform='scale(1)';
+      ring.style.borderColor='';
+    }
+  });
+  window.addEventListener('mouseup', e=>{
+    if(!dragging) return;
+    dragging=false;
+    el.style.transition='';
+    const cx = window.innerWidth/2, cy = window.innerHeight/2;
+    const dist = Math.hypot(e.clientX-cx, e.clientY-cy);
+    if(dist < 80){
+      el.style.transform='scale(0)';
+      el.style.opacity='0';
+      setTimeout(()=>el.remove(),300);
+    }
+    ring.style.transform='scale(1)';
+    ring.style.borderColor='';
+  });
+}
+
+// Apps
+const apps = {
+  terminal: ()=> createWindow('terminal','Zero Shell','\
+    <div class="terminal" id="term">\
+      <div class="term-line"><span style="color:#6B7280"># Zero OS Terminal v0.1 - Real kernel boots at 0x10000c</span></div>\
+      <div class="term-line">zero@zero-os:~$ <span style="color:var(--cyan)">uname -a</span></div>\
+      <div class="term-line">Zero OS 0.1.0 Genesis x86_64 zero-kernel.elf 8.1K</div>\
+      <div class="term-line">zero@zero-os:~$ <span style="color:var(--cyan)">ls -lh /boot</span></div>\
+      <div class="term-line">-rwx 8.1K zero-kernel.elf  &lt;- REAL BOOTABLE KERNEL</div>\
+      <div class="term-line">-rw- 1.2K boot.S</div>\
+      <div class="term-line">-rw- 4.9K kernel.c</div>\
+      <div class="term-line">zero@zero-os:~$ <span id="cursor">_</span><input class="term-input" id="term-input" autofocus></div>\
+    </div>', 520, 340),
+
+  files: ()=> createWindow('files','Zero Files','\
+    <div class="files-canvas">\
+      <div class="file-dot" style="left:20%;top:20%">📁<label>ZeroOS</label></div>\
+      <div class="file-dot" style="left:55%;top:18%">⚙<label>kernel.elf</label></div>\
+      <div class="file-dot" style="left:30%;top:55%">📄<label>README.md</label></div>\
+      <div class="file-dot" style="left:65%;top:60%">💿<label>boot.S</label></div>\
+      <div class="file-dot" style="left:45%;top:40%">🌀<label>Zero Ring</label></div>\
+      <div style="position:absolute;bottom:16px;left:16px;font-size:11px;color:var(--dim);font-family:JetBrains Mono">Infinite canvas • Drag • Zoom • Search to find<br>5 files in ZeroFS</div>\
+    </div>', 560, 380),
+
+  browser: ()=> createWindow('browser','Void Browser','\
+    <div style="padding:20px;font-family:Space Grotesk">\
+      <div style="background:rgba(255,255,255,0.06);border-radius:100px;padding:10px 16px;display:flex;gap:10px;align-items:center;margin-bottom:20px">\
+        <span style="opacity:0.5">◎</span><span style="font-size:13px">zero://welcome</span><span style="margin-left:auto;background:var(--cyan);color:#000;padding:4px 10px;border-radius:100px;font-size:11px;font-weight:700">ZERO SEARCH</span>\
+      </div>\
+      <h2 style="font-size:28px;line-height:1.1;margin-bottom:12px">Start from<br><span style="color:var(--cyan)">Zero.</span></h2>\
+      <p style="opacity:0.6;font-size:14px;line-height:1.5">This is Void - a browser with no tabs, no clutter.<br>Pages stack like cards. Search orbits.<br><br>Real Zero OS kernel built: <code style="background:rgba(0,255,209,0.1);padding:2px 6px;border-radius:4px">zero-kernel.elf (8.1K)</code><br>Bootable with QEMU / GRUB.<br><br><a href=\"https://github.com/hirushanethsara323-jpg/arena-ai-storage-1785904612\" target=\"_blank\" style=\"color:var(--cyan)\">View on GitHub →</a></p>\
+    </div>', 480, 360),
+
+  editor: ()=> createWindow('editor','Zero Edit','\
+    <div style="padding:16px;background:#0A0A0F;height:100%;font-family:JetBrains Mono;font-size:12px;color:#E8E8EC;white-space:pre;line-height:1.6">\
+<span style="color:#6B7280">/* kernel.c - Zero OS Genesis */</span>\n\
+<span style="color:var(--purple)">void</span> <span style="color:var(--cyan)">kernel_main</span>() {\n\
+    <span style="color:var(--cyan)">terminal_initialize</span>();\n\
+    <span style="color:var(--cyan)">draw_zero_logo</span>();\n\
+    <span style="color:#E8E8EC">terminal_writestring</span>(<span style="color:#FFBD2E">"Zero Bloat. Zero Tracking. Zero Limits."</span>);\n\
+}\n\n\
+<span style="color:#6B7280">// Next: keyboard driver, shell, memory manager...</span>\n\
+<span style="color:#6B7280">// Build: make kernel -> zero-kernel.elf</span>\
+    </div>', 520, 320),
+
+  settings: ()=> createWindow('settings','Zero Settings','\
+    <div style="padding:20px">\
+      <div style="display:flex;gap:12px;margin-bottom:20px"><div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--purple))"></div><div><div style="font-weight:700">Zero OS</div><div style="opacity:0.5;font-size:12px">v0.1 Genesis • 8.1K kernel</div></div></div>\
+      <div style="font-size:12px;opacity:0.6;margin-bottom:16px">UNIQUE DESIGN SPECS</div>\
+      <div style="display:grid;gap:8px">\
+        <div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:12px;display:flex;justify-content:space-between"><span>Cyan</span><span style="color:var(--cyan)">#00FFD1</span></div>\
+        <div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:12px;display:flex;justify-content:space-between"><span>Purple</span><span style="color:var(--purple)">#8B5CF6</span></div>\
+        <div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:12px;display:flex;justify-content:space-between"><span>Zero Ring</span><span>Active</span></div>\
+        <div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:12px;display:flex;justify-content:space-between"><span>Storage</span><span>GitHub Connected ✅</span></div>\
+      </div>\
+    </div>', 400, 380),
+
+  ai: ()=> createWindow('ai','Zero AI','\
+    <div style="padding:20px;text-align:center">\
+      <div style="width:64px;height:64px;margin:20px auto;background:radial-gradient(circle,var(--cyan),var(--purple));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px">✦</div>\
+      <h3>Zero AI</h3><p style="opacity:0.6;font-size:13px;margin-top:8px">Local, offline, zero-tracking assistant.<br>Built into kernel shell (Phase 7).</p>\
+      <div style="margin-top:20px;background:rgba(255,255,255,0.05);border-radius:12px;padding:12px;text-align:left;font-family:JetBrains Mono;font-size:12px">\
+        <div style="color:var(--dim)">zero@zero:~$ zero ai "explain kernel"</div>\
+        <div style="margin-top:8px">Your kernel at 0x10000c prints via VGA buffer at 0xB8000. No drivers yet. Next is IDT + keyboard.</div>\
+      </div>\
+    </div>', 400, 340),
+};
+
+document.querySelectorAll('.orbit-app').forEach(el=>{
+  el.addEventListener('click',()=>{
+    const app = el.dataset.app;
+    if(apps[app]) apps[app]();
+    ring.classList.remove('active');
+  });
+});
+
+// Open terminal by default after boot
+setTimeout(()=>{ apps.terminal(); }, 3000);
+
+// Keyboard for terminal
+document.addEventListener('keydown', e=>{
+  const input = document.getElementById('term-input');
+  if(!input) return;
+  if(e.key === 'Enter'){
+    const val = input.value.trim();
+    const term = document.getElementById('term');
+    const line = document.createElement('div');
+    line.className='term-line';
+    if(val==='clear'){ term.innerHTML=''; }
+    else if(val==='help'){ line.innerHTML='<span style="color:var(--dim)">Commands: help, clear, echo, uname, ls, zero</span>'; term.insertBefore(line, input.parentElement); }
+    else if(val.startsWith('echo ')){ line.textContent=val.slice(5); term.insertBefore(line, input.parentElement); }
+    else if(val==='uname -a' || val==='zero'){ line.textContent='Zero OS 0.1.0 x86_64 8.1K - Zero Bloat. Zero Tracking.'; term.insertBefore(line, input.parentElement); }
+    else if(val!==''){ line.innerHTML='<span style="color:#FF5F57">Command not found: '+val+' (Phase 2 shell coming)</span>'; term.insertBefore(line, input.parentElement); }
+    input.value='';
+  }
+});
+</script>
+</body>
+</html>
