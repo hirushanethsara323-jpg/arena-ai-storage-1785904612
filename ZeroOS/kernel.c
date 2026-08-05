@@ -192,7 +192,7 @@ void kernel_main(uint32_t magic, uint32_t mb_info) {
     terminal_writestring("OK\n");
 
     terminal_writestring("  > PMM init (32MB fake)... ");
-    pmm_init(32*1024, 0x10000); // 32MB, bitmap at 0x10000
+    pmm_init(32*1024, 0x70000); // Was 0x10000 but conflicts with multiboot info at 0x10000, now 0x70000
     terminal_writestring("OK\n");
     terminal_writestring("  > Free blocks: ");
     {
