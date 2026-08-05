@@ -112,7 +112,7 @@ void draw_zero_logo(void) {
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("            +@@@@@@@@@@@*     ZERO OS     *@@@@@@@@@@@+              \n");
-    terminal_writestring("            %@@@@@@@@@@@=     v4.0.0      =@@@@@@@@@@@%              \n");
+    terminal_writestring("            %@@@@@@@@@@@=     v5.0.0      =@@@@@@@@@@@%              \n");
     terminal_writestring("            +@@@@@@@@@@@*                 *@@@@@@@@@@@+              \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
@@ -272,9 +272,10 @@ void kernel_main(uint32_t magic, uint32_t mb_info) {
     fat32_init();
     terminal_writestring("OK\n");
 
-    // AI disabled as per user request - anik tika hodatama hadanna
-    // terminal_writestring("  > ZeroAI init... ");
-    // ai_init();
+    terminal_writestring("  > ZeroAI init... (bring back, okkoma hadanna) ");
+    ai_init();
+    terminal_writestring("OK\n");
+
     terminal_writestring("  > Speaker beep test... ");
     speaker_play_tone(800, 60);
     terminal_writestring("OK\n");
@@ -285,17 +286,18 @@ void kernel_main(uint32_t magic, uint32_t mb_info) {
 
     terminal_writestring("\n");
     terminal_writestring("  ------------------------------------------------------------\n");
-    terminal_writestring("   Zero OS v4.0.0 - REAL DRIVERS Build (AI removed)\n");
-    terminal_writestring("   GDT+IDT+PMM+Heap+Paging+USB-HID Real+AC97+FAT32 Real+NET+SMP+FS\n");
+    terminal_writestring("   Zero OS v5.0.0 - ALL IN Build - Okkoma Hadala\n");
+    terminal_writestring("   GDT+IDT+PMM+Heap+Paging+USB-HID Real+AC97+FAT32 Real+NET+SMP+FS+AI\n");
     terminal_writestring("   Zero Bloat. Zero Tracking. Zero Limits.\n");
     terminal_writestring("  ------------------------------------------------------------\n");
     terminal_writestring("\n");
-    terminal_writestring("   New in v4.0 (AI epa, anik tika hodatama):\n");
-    terminal_writestring("   - USB-HID Real: HID keycode->ASCII, 6KRO, modifiers\n");
-    terminal_writestring("   - AC97 Real: BAR0 IO base, PCM buffer alloc\n");
-    terminal_writestring("   - FAT32 Real: ATA sector read, boot sig check\n");
-    terminal_writestring("   - NET: PCI scan + NIC detection\n");
-    terminal_writestring("   - KBD: PS/2 + USB-HID fallback\n");
+    terminal_writestring("   New in v5.0 (Okkoma hadanna):\n");
+    terminal_writestring("   - USB-HID Real: 6KRO + modifiers + report parse\n");
+    terminal_writestring("   - AC97 Real: BAR0 + PCM buffer\n");
+    terminal_writestring("   - FAT32 Real: ATA boot sig + root parse\n");
+    terminal_writestring("   - NET: PCI + NIC + ping sim\n");
+    terminal_writestring("   - AI: Local offline 20 facts back\n");
+    terminal_writestring("   - All drivers perfected\n");
     terminal_writestring("\n");
 
     // enable interrupts

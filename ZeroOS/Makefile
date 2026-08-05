@@ -3,7 +3,7 @@ CFLAGS = -ffreestanding -fno-builtin -fno-stack-protector -nostartfiles -nodefau
 BOOT_CFLAGS = -ffreestanding -c
 
 LDFLAGS = -n -T linker.ld
-OBJECTS = boot.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o pit.o paging.o speaker.o smp.o context.o pci.o usb.o usb_hid.o ac97.o net.o fs/ata.o fs/ramfs.o fs/vfs.o fs/zerofs2.o fs/fat32.o gui/fb.o gui/mouse.o gui/compositor.o userland/elf.o userland/syscall.o userland/task.o userland/app.o
+OBJECTS = boot.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o pit.o paging.o speaker.o smp.o context.o pci.o usb.o usb_hid.o ac97.o net.o fs/ata.o fs/ramfs.o fs/vfs.o fs/zerofs2.o fs/fat32.o gui/fb.o gui/mouse.o gui/compositor.o userland/elf.o userland/syscall.o userland/task.o userland/app.o ai.o
 KERNEL = zero-kernel.elf
 
 all: kernel
@@ -17,7 +17,7 @@ context.o: context.S
 kernel.o: kernel.c
 	$(CC) $(CFLAGS) kernel.c -o kernel.o
 
-keyboard.o: keyboard.c keyboard.h io.h
+keyboard.o: keyboard.c keyboard.h io.h usb_hid.h
 	$(CC) $(CFLAGS) keyboard.c -o keyboard.o
 
 shell.o: shell.c shell.h io.h keyboard.h heap.h pmm.h fs/vfs.h gui/compositor.h userland/task.h userland/app.h paging.h pci.h ai.h
@@ -53,7 +53,7 @@ smp.o: smp.c smp.h io.h
 pci.o: pci.c pci.h io.h
 	$(CC) $(CFLAGS) pci.c -o pci.o
 
-usb.o: usb.c usb.h pci.h io.h
+usb.o: usb.c usb.h pci.h heap.h io.h
 	$(CC) $(CFLAGS) usb.c -o usb.o
 
 usb_hid.o: usb_hid.c usb_hid.h usb.h io.h
@@ -106,7 +106,7 @@ userland/app.o: userland/app.h userland/app.c heap.h io.h
 
 kernel: $(OBJECTS)
 	ld $(LDFLAGS) -o $(KERNEL) $(OBJECTS)
-	@echo "✅ Zero OS v2.0 Ultimate Build: $(KERNEL)"
+	@echo "✅ Zero OS v5.0 ALL IN Build: $(KERNEL)"
 	@ls -lh $(KERNEL)
 	@file $(KERNEL) || true
 	@echo "Size: $$(du -h $(KERNEL) | cut -f1)"
