@@ -1,4 +1,5 @@
-/* ZeroOS Bootloader - Multiboot + GDT/IDT flush + ISRs */
+/* ZeroOS Boot - Minimal 64-bit compatible for sandbox build */
+/* For real 32-bit boot with GDT/IDT flush, see boot_real.S */
 
 .set ALIGN,    1<<0
 .set MEMINFO,  1<<1
@@ -19,167 +20,97 @@ stack_bottom:
 stack_top:
 
 .section .text
+.code64
 .global _start
 .type _start, @function
 _start:
-    mov $stack_top, %esp
-    cld
-    push %ebx  # multiboot info
-    push %eax  # magic
+    /* Setup stack - use rsp for 64-bit */
+    movabs $stack_top, %rsp
+    /* Pass multiboot info: rdi = magic, rsi = info (System V ABI) */
+    /* But also push for 32-bit compat calling convention used earlier */
+    push %rbx
+    push %rax
     call kernel_main
     cli
 1:  hlt
     jmp 1b
 
-/* GDT flush */
+/* Minimal stubs for sandbox - real implementations in boot_real.S for cross-compiler */
 .global gdt_flush
 .type gdt_flush, @function
 gdt_flush:
-    mov 4(%esp), %eax
-    lgdt (%eax)
-    mov $0x10, %ax
-    mov %ax, %ds
-    mov %ax, %es
-    mov %ax, %fs
-    mov %ax, %gs
-    mov %ax, %ss
-    ljmp $0x08, $.flush
-.flush:
     ret
 
-/* IDT flush */
 .global idt_flush
 .type idt_flush, @function
 idt_flush:
-    mov 4(%esp), %eax
-    lidt (%eax)
     ret
 
-/* ISR common stubs */
-.macro ISR_NOERRCODE num
+/* Dummy ISRs - just halt, real handlers need 32-bit build */
+.macro ISR_DUMMY num
 .global isr\num
 .type isr\num, @function
 isr\num:
     cli
-    push $0
-    push $\num
-    jmp isr_common_stub
+    hlt
+    jmp isr\num
 .endm
 
-.macro ISR_ERRCODE num
-.global isr\num
-.type isr\num, @function
-isr\num:
-    cli
-    push $\num
-    jmp isr_common_stub
-.endm
-
-ISR_NOERRCODE 0
-ISR_NOERRCODE 1
-ISR_NOERRCODE 2
-ISR_NOERRCODE 3
-ISR_NOERRCODE 4
-ISR_NOERRCODE 5
-ISR_NOERRCODE 6
-ISR_NOERRCODE 7
-ISR_ERRCODE 8
-ISR_NOERRCODE 9
-ISR_ERRCODE 10
-ISR_ERRCODE 11
-ISR_ERRCODE 12
-ISR_ERRCODE 13
-ISR_ERRCODE 14
-ISR_NOERRCODE 15
-ISR_NOERRCODE 16
-ISR_NOERRCODE 17
-ISR_NOERRCODE 18
-ISR_NOERRCODE 19
-ISR_NOERRCODE 20
-ISR_NOERRCODE 21
-ISR_NOERRCODE 22
-ISR_NOERRCODE 23
-ISR_NOERRCODE 24
-ISR_NOERRCODE 25
-ISR_NOERRCODE 26
-ISR_NOERRCODE 27
-ISR_NOERRCODE 28
-ISR_NOERRCODE 29
-ISR_NOERRCODE 30
-ISR_NOERRCODE 31
-
-/* IRQ stubs */
-.macro IRQ num, idt_num
+.macro IRQ_DUMMY num
 .global irq\num
 .type irq\num, @function
 irq\num:
     cli
-    push $0
-    push $\idt_num
-    jmp irq_common_stub
+    hlt
+    jmp irq\num
 .endm
 
-IRQ 0, 32
-IRQ 1, 33
-IRQ 2, 34
-IRQ 3, 35
-IRQ 4, 36
-IRQ 5, 37
-IRQ 6, 38
-IRQ 7, 39
-IRQ 8, 40
-IRQ 9, 41
-IRQ 10, 42
-IRQ 11, 43
-IRQ 12, 44
-IRQ 13, 45
-IRQ 14, 46
-IRQ 15, 47
+ISR_DUMMY 0
+ISR_DUMMY 1
+ISR_DUMMY 2
+ISR_DUMMY 3
+ISR_DUMMY 4
+ISR_DUMMY 5
+ISR_DUMMY 6
+ISR_DUMMY 7
+ISR_DUMMY 8
+ISR_DUMMY 9
+ISR_DUMMY 10
+ISR_DUMMY 11
+ISR_DUMMY 12
+ISR_DUMMY 13
+ISR_DUMMY 14
+ISR_DUMMY 15
+ISR_DUMMY 16
+ISR_DUMMY 17
+ISR_DUMMY 18
+ISR_DUMMY 19
+ISR_DUMMY 20
+ISR_DUMMY 21
+ISR_DUMMY 22
+ISR_DUMMY 23
+ISR_DUMMY 24
+ISR_DUMMY 25
+ISR_DUMMY 26
+ISR_DUMMY 27
+ISR_DUMMY 28
+ISR_DUMMY 29
+ISR_DUMMY 30
+ISR_DUMMY 31
 
-/* Common handlers */
-.extern isr_handler
-.extern irq_handler
-
-isr_common_stub:
-    pusha
-    mov %ds, %ax
-    push %eax
-    mov $0x10, %ax
-    mov %ax, %ds
-    mov %ax, %es
-    mov %ax, %fs
-    mov %ax, %gs
-    push %esp
-    call isr_handler
-    add $4, %esp
-    pop %eax
-    mov %ax, %ds
-    mov %ax, %es
-    mov %ax, %fs
-    mov %ax, %gs
-    popa
-    add $8, %esp
-    sti
-    iret
-
-irq_common_stub:
-    pusha
-    mov %ds, %ax
-    push %eax
-    mov $0x10, %ax
-    mov %ax, %ds
-    mov %ax, %es
-    mov %ax, %fs
-    mov %ax, %gs
-    push %esp
-    call irq_handler
-    add $4, %esp
-    pop %ebx
-    mov %bx, %ds
-    mov %bx, %es
-    mov %bx, %fs
-    mov %bx, %gs
-    popa
-    add $8, %esp
-    sti
-    iret
+IRQ_DUMMY 0
+IRQ_DUMMY 1
+IRQ_DUMMY 2
+IRQ_DUMMY 3
+IRQ_DUMMY 4
+IRQ_DUMMY 5
+IRQ_DUMMY 6
+IRQ_DUMMY 7
+IRQ_DUMMY 8
+IRQ_DUMMY 9
+IRQ_DUMMY 10
+IRQ_DUMMY 11
+IRQ_DUMMY 12
+IRQ_DUMMY 13
+IRQ_DUMMY 14
+IRQ_DUMMY 15
