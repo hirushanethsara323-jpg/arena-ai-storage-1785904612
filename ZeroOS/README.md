@@ -1,81 +1,68 @@
-# Zero OS 🌀 v0.2 - Shell Build
+# Zero OS 🌀 v0.3 - Memory Build
 
 > **Zero Bloat. Zero Tracking. Zero Limits.**
 
-### Current Status: v0.2 Shell ✅
+### Current: v0.3 Memory ✅ (25K kernel)
 
-**Real Kernel:** `zero-kernel.elf` - 13K (was 8.1K in v0.1)
-- Boots to VGA 80x25
-- **NEW:** PS/2 Polling Keyboard Driver (`keyboard.c`)
-- **NEW:** Zero Shell with commands (`shell.c`)
-- **NEW:** Scrolling terminal + backspace support
+**Real Kernel:** `zero-kernel.elf` - 25K (v0.2 was 13K, v0.1 8.1K)
+- Boots at 1MB
+- VGA 80x25 + scroll
+- PS/2 Keyboard driver
+- Zero Shell with 8 commands
+- **NEW v0.3:**
+  - GDT - 5 entries flat (null, code, data, user code, user data)
+  - IDT - 256 entries, ISRs 0-31 + IRQs 0-15
+  - PIC Remap - 32/40 to avoid CPU exceptions
+  - PMM - Bitmap allocator, 16MB free @1MB, 4KB blocks, 8192 blocks total
+  - Heap - 1MB @0x200000, kmalloc/kfree first-fit, 16-byte aligned
 
 ```
-zero@zero-os:~$ help
- Zero OS Shell v0.2 - Commands:
-  help, clear, echo <text>, zero, uname, reboot, history, logo
+zero@zero-os:~$ mem
+ [Memory]
+  PMM Total blocks: 8192
+  PMM Free blocks: ~4096
+  PMM Used blocks: ~4096
+  Heap free: 1048576 bytes
+  Block size: 4096 bytes
+  Testing kmalloc(64)... OK @0x200010
 ```
 
 ### Build
 ```bash
 cd ZeroOS
 make kernel
-# Output: zero-kernel.elf 13K
-# Run locally: qemu-system-i386 -kernel zero-kernel.elf
+# Output: zero-kernel.elf 25K
+# Local: qemu-system-i386 -kernel zero-kernel.elf
 ```
 
-### What's New in v0.2
-- **io.h:** inb/outb low-level
-- **keyboard.h/c:** 128 scancode table, shift, capslock, polling via 0x60/0x64
-- **shell.h/c:** 128 byte buffer, history count, 8 commands
-- **kernel.c:** Now with scroll, backspace, calls shell_run()
+### Phase 1-3 Done
+- ✅ Phase 1: Genesis - boot + VGA
+- ✅ Phase 2: Shell + KBD
+- ✅ Phase 3: Memory - GDT+IDT+PIC+PMM+Heap
 
-### Roadmap
+### Next: Phase 4 ZeroFS
+- ATA PIO driver
+- RamFS / ZeroFS
+- ls, cat, touch, rm
+- ELF loader prep
 
-#### ✅ Phase 1: Genesis (Done)
-- Multiboot bootloader, VGA, Hello Zero
-
-#### ✅ Phase 2: Shell (NOW - Done)
-- [x] Keyboard driver (polling)
-- [x] Shell + 7 commands
-- [x] Scroll + backspace
-
-#### 🔜 Phase 3: Memory (Next)
-- [ ] GDT - flat 0-4GB + 64-bit
-- [ ] IDT + PIC remap - interrupt driven keyboard
-- [ ] Physical memory manager (bitmap at 1M)
-- [ ] kmalloc/kfree heap
-
-#### ⏳ Phase 4: ZeroFS
-- [ ] RamFS, ZeroFS log-structured
-- [ ] ATA PIO driver
-
-#### 🎨 Phase 5: Zero Ring GUI (Unique)
-- Circular dock, orbit apps, void browser
-- Web simulator already shows concept (web/index.html)
-
-#### 🚀 Phase 6: Userland
-- ELF loader, syscalls, scheduler
-
-### File Structure
+### Files
 ```
-ZeroOS/
-├── boot.S          # Entry
-├── kernel.c        # VGA + main -> shell
-├── io.h            # inb/outb
-├── keyboard.h/c    # PS/2 driver
-├── shell.h/c       # Zero Shell
-├── linker.ld
-├── Makefile
-├── zero-kernel.elf # 13K bootable
-├── docs/design.md  # Unique design
-└── web/index.html  # Web preview of Zero Ring UI
+boot.S         # Minimal 64-bit sandbox, boot_real.S = full 32-bit version
+boot_real.S    # Full GDT flush ljmp + pusha/popa for i686-elf-gcc
+kernel.c       # Now calls gdt_init, pic_remap, idt_init, pmm_init, heap_init
+gdt.h/c        # 5 entries
+idt.h/c        # 256 entries + handler registry
+pic.h/c        # Remap 0x20/0xA0
+pmm.h/c        # Bitmap PMM
+heap.h/c       # kmalloc/kfree
+io.h           # inb/outb
+keyboard.h/c
+shell.h/c      # + mem command
 ```
 
-### Zero Design
-- Background #0A0A0F, Cyan #00FFD1, Purple #8B5CF6
-- No sharp corners, all zero/circle
-- Zero Ring = central interaction
+### Web Preview
+`web/index.html` - Zero Ring UI, unique design, now shows v0.3
 
 ---
-Built from zero. Push to GitHub storage: https://github.com/hirushanethsara323-jpg/arena-ai-storage-1785904612
+Repo: https://github.com/hirushanethsara323-jpg/arena-ai-storage-1785904612
