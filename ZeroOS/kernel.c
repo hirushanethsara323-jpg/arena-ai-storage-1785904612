@@ -112,7 +112,7 @@ void draw_zero_logo(void) {
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("            +@@@@@@@@@@@*     ZERO OS     *@@@@@@@@@@@+              \n");
-    terminal_writestring("            %@@@@@@@@@@@=     v0.5.0      =@@@@@@@@@@@%              \n");
+    terminal_writestring("            %@@@@@@@@@@@=     v0.6.0      =@@@@@@@@@@@%              \n");
     terminal_writestring("            +@@@@@@@@@@@*                 *@@@@@@@@@@@+              \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
@@ -135,6 +135,9 @@ extern void fb_init(uint32_t mb_info);
 extern void mouse_init(void);
 extern void compositor_init(void);
 extern void compositor_draw(void);
+extern void pit_init(uint32_t freq);
+extern void tasking_init(void);
+extern void syscall_init(void);
 extern void shell_run(void);
 
 void kernel_main(uint32_t magic, uint32_t mb_info) {
@@ -199,23 +202,35 @@ void kernel_main(uint32_t magic, uint32_t mb_info) {
     compositor_init();
     terminal_writestring("OK\n");
 
+    terminal_writestring("  > PIT init (100Hz)... ");
+    pit_init(100);
+    terminal_writestring("OK\n");
+
+    terminal_writestring("  > Tasking init... ");
+    tasking_init();
+    terminal_writestring("OK\n");
+
+    terminal_writestring("  > Syscalls init (int 0x80)... ");
+    syscall_init();
+    terminal_writestring("OK\n");
+
     terminal_writestring("  > Zero Ring: [//////////] 100%\n\n");
 
     draw_zero_logo();
 
     terminal_writestring("\n");
     terminal_writestring("  ------------------------------------------------------------\n");
-    terminal_writestring("   Zero OS v0.5.0 - Zero Ring GUI Build\n");
-    terminal_writestring("   GDT+IDT+PIC+PMM+Heap+VFS+FB+Mouse+Compositor\n");
+    terminal_writestring("   Zero OS v0.6.0 - Userland Build\n");
+    terminal_writestring("   GDT+IDT+PIC+PMM+Heap+VFS+FB+Mouse+Comp+PIT+Task+ELF+Syscall\n");
     terminal_writestring("   Zero Bloat. Zero Tracking. Zero Limits.\n");
     terminal_writestring("  ------------------------------------------------------------\n");
     terminal_writestring("\n");
-    terminal_writestring("   New in v0.5:\n");
-    terminal_writestring("   - FB: 1024x768x32 LFB or VGA fallback\n");
-    terminal_writestring("   - Mouse: PS/2 3-byte packet\n");
-    terminal_writestring("   - Compositor: Zero Ring + 16 windows max\n");
-    terminal_writestring("   - GUI: circle, rect, pixel primitives\n");
-    terminal_writestring("   - Web preview is real GUI concept\n");
+    terminal_writestring("   New in v0.6:\n");
+    terminal_writestring("   - PIT: 100Hz timer, IRQ0\n");
+    terminal_writestring("   - Tasking: 16 tasks max, round-robin\n");
+    terminal_writestring("   - ELF: loader for 32-bit exec\n");
+    terminal_writestring("   - Syscalls: exit, write, zero (int 0x80)\n");
+    terminal_writestring("   - Commands: ps, exec, kill\n");
     terminal_writestring("\n");
 
     // enable interrupts

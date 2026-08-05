@@ -41,22 +41,34 @@ static void clear_screen(void) {
     terminal_initialize();
 }
 
+extern void task_list(void);
+extern int task_create(const char* name, void (*entry)(void));
+extern void task_yield(void);
+extern uint32_t pit_get_ticks(void);
+
+static void dummy_task1(void) {
+    while(1) {
+        // would do work
+        task_yield();
+    }
+}
+
 static void cmd_help(void) {
-    terminal_writestring("\n Zero OS Shell v0.5 - Commands:\n");
+    terminal_writestring("\n Zero OS Shell v0.6 - Commands:\n");
     terminal_writestring("  help        - Show this help\n");
     terminal_writestring("  clear       - Clear screen\n");
     terminal_writestring("  echo <text> - Print text\n");
     terminal_writestring("  zero/logo   - Show Zero info\n");
     terminal_writestring("  uname       - System info\n");
     terminal_writestring("  mem         - Memory stats\n");
-    terminal_writestring("  ls          - List files (ZeroFS)\n");
-    terminal_writestring("  cat <file>  - Read file\n");
-    terminal_writestring("  touch <file>- Create file\n");
-    terminal_writestring("  rm <file>   - Delete file\n");
-    terminal_writestring("  write <file> <text>\n");
-    terminal_writestring("  gui         - Test compositor draw\n");
+    terminal_writestring("  ls/cat/touch/rm/write - Files\n");
+    terminal_writestring("  gui         - Test compositor\n");
+    terminal_writestring("  ps          - List tasks\n");
+    terminal_writestring("  ticks       - PIT ticks\n");
+    terminal_writestring("  spawn <name> - Create dummy task\n");
+    terminal_writestring("  exec <elf>  - Load ELF (stub)\n");
     terminal_writestring("  reboot/history\n");
-    terminal_writestring("\n  v0.5: FB 1024x768, Mouse, Compositor 16 wins\n\n");
+    terminal_writestring("\n  v0.6: PIT+Tasking+ELF+Syscalls, 16 tasks\n\n");
 }
 
 static void cmd_zero(void) {
@@ -149,6 +161,20 @@ static void execute_command(void) {
         cmd_mem();
     } else if(strcmp(buffer, "ls") == 0) {
         vfs_ls();
+    } else if(strcmp(buffer, "ps") == 0) {
+        task_list();
+    } else if(strcmp(buffer, "ticks") == 0) {
+        terminal_writestring("\n [PIT] Ticks: ");
+        { uint32_t t=pit_get_ticks(); char b[12]; int n=t; int i=0; if(n==0)b[i++]='0'; else {char rev[12];int r=0;while(n>0){rev[r++]='0'+(n%10);n/=10;}while(r>0)b[i++]=rev[--r];} b[i]=0; terminal_writestring(b); terminal_writestring(" (100Hz)\n\n"); }
+    } else if(strncmp(buffer, "spawn ", 6)==0) {
+        char* name = buffer+6;
+        while(*name==' ') name++;
+        if(*name==0) name="dummy";
+        int id = task_create(name, dummy_task1);
+        if(id>=0) { terminal_writestring("\n [TASK] Spawned "); terminal_writestring(name); terminal_writestring(" id="); { char b[12]; int n=id; int i=0; if(n==0)b[i++]='0'; else {char rev[12];int r=0;while(n>0){rev[r++]='0'+(n%10);n/=10;}while(r>0)b[i++]=rev[--r];} b[i]=0; terminal_writestring(b); } terminal_writestring("\n\n"); }
+        else { terminal_writestring("\n [TASK] Failed, max tasks\n\n"); }
+    } else if(strncmp(buffer, "exec ", 5)==0) {
+        terminal_writestring("\n [ELF] Exec not yet fully implemented in sandbox - needs paging\n\n");
     } else if(strcmp(buffer, "gui") == 0) {
         terminal_writestring("\n [GUI] Drawing Zero Ring compositor...\n");
         compositor_draw();

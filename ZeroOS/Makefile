@@ -3,7 +3,7 @@ CFLAGS = -ffreestanding -fno-builtin -fno-stack-protector -nostartfiles -nodefau
 BOOT_CFLAGS = -ffreestanding -c
 
 LDFLAGS = -n -T linker.ld
-OBJECTS = boot.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o fs/ata.o fs/ramfs.o fs/vfs.o gui/fb.o gui/mouse.o gui/compositor.o
+OBJECTS = boot.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o pit.o fs/ata.o fs/ramfs.o fs/vfs.o gui/fb.o gui/mouse.o gui/compositor.o userland/elf.o userland/syscall.o userland/task.o
 KERNEL = zero-kernel.elf
 
 all: kernel
@@ -17,7 +17,7 @@ kernel.o: kernel.c
 keyboard.o: keyboard.c keyboard.h io.h
 	$(CC) $(CFLAGS) keyboard.c -o keyboard.o
 
-shell.o: shell.c shell.h io.h keyboard.h heap.h pmm.h fs/vfs.h
+shell.o: shell.c shell.h io.h keyboard.h heap.h pmm.h fs/vfs.h gui/compositor.h userland/task.h
 	$(CC) $(CFLAGS) shell.c -o shell.o
 
 gdt.o: gdt.c gdt.h io.h
@@ -34,6 +34,9 @@ pmm.o: pmm.c pmm.h io.h
 
 heap.o: heap.c heap.h io.h
 	$(CC) $(CFLAGS) heap.c -o heap.o
+
+pit.o: pit.c pit.h io.h
+	$(CC) $(CFLAGS) pit.c -o pit.o
 
 fs/ata.o: fs/ata.c fs/ata.h io.h
 	$(CC) $(CFLAGS) fs/ata.c -o fs/ata.o
@@ -53,13 +56,22 @@ gui/mouse.o: gui/mouse.h gui/mouse.c io.h
 gui/compositor.o: gui/compositor.h gui/compositor.c gui/fb.h heap.h io.h
 	$(CC) $(CFLAGS) gui/compositor.c -o gui/compositor.o
 
+userland/elf.o: userland/elf.h userland/elf.c heap.h pmm.h io.h
+	$(CC) $(CFLAGS) userland/elf.c -o userland/elf.o
+
+userland/syscall.o: userland/syscall.h userland/syscall.c fs/vfs.h io.h
+	$(CC) $(CFLAGS) userland/syscall.c -o userland/syscall.o
+
+userland/task.o: userland/task.h userland/task.c heap.h pmm.h io.h
+	$(CC) $(CFLAGS) userland/task.c -o userland/task.o
+
 kernel: $(OBJECTS)
 	ld $(LDFLAGS) -o $(KERNEL) $(OBJECTS)
-	@echo "✅ Zero OS v0.5 Kernel built: $(KERNEL)"
+	@echo "✅ Zero OS v0.6 Kernel built: $(KERNEL)"
 	@ls -lh $(KERNEL)
 	@file $(KERNEL) || true
 	@echo "Size: $$(du -h $(KERNEL) | cut -f1)"
 
 clean:
-	rm -f *.o $(KERNEL) zero-os.iso fs/*.o gui/*.o
+	rm -f *.o $(KERNEL) zero-os.iso fs/*.o gui/*.o userland/*.o
 	rm -rf iso
