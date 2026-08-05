@@ -4,7 +4,7 @@ AS = gcc
 ASFLAGS = -m32 -ffreestanding -c
 
 LDFLAGS = -m elf_i386 -T linker.ld
-OBJECTS = boot_real.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o pit.o paging.o speaker.o smp.o context.o pci.o usb.o usb_hid.o ac97.o net.o fs/ata.o fs/ramfs.o fs/vfs.o fs/zerofs2.o fs/fat32.o gui/fb.o gui/font.o gui/mouse.o gui/compositor.o userland/elf.o userland/syscall.o userland/task.o userland/app.o ai.o serial.o
+OBJECTS = boot_real.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o pit.o paging.o speaker.o smp.o context.o pci.o usb.o usb_hid.o ac97.o net.o fs/ata.o fs/ramfs.o fs/vfs.o fs/zerofs2.o fs/fat32.o gui/fb.o gui/font.o gui/mouse.o gui/compositor.o userland/elf.o userland/syscall.o userland/task.o userland/app.o apps/calc.o ai.o serial.o
 KERNEL = zero-kernel-32.elf
 ISO = zero-os.iso
 
@@ -138,3 +138,5 @@ iso: kernel
 clean:
 	rm -f *.o $(KERNEL) $(ISO) fs/*.o gui/*.o userland/*.o
 	rm -rf iso
+apps/calc.o: apps/calc.h apps/calc.c gui/compositor.h gui/fb.h gui/font.h heap.h io.h
+	$(CC) $(CFLAGS) apps/calc.c -o apps/calc.o
