@@ -42,7 +42,7 @@ static void clear_screen(void) {
 }
 
 static void cmd_help(void) {
-    terminal_writestring("\n Zero OS Shell v0.4 - Commands:\n");
+    terminal_writestring("\n Zero OS Shell v0.5 - Commands:\n");
     terminal_writestring("  help        - Show this help\n");
     terminal_writestring("  clear       - Clear screen\n");
     terminal_writestring("  echo <text> - Print text\n");
@@ -53,10 +53,10 @@ static void cmd_help(void) {
     terminal_writestring("  cat <file>  - Read file\n");
     terminal_writestring("  touch <file>- Create file\n");
     terminal_writestring("  rm <file>   - Delete file\n");
-    terminal_writestring("  write <file> <text> - Write to file\n");
-    terminal_writestring("  reboot      - Reboot\n");
-    terminal_writestring("  history     - Command count\n");
-    terminal_writestring("\n  ZeroFS: 32 files max, 4KB each, ATA PIO driver\n\n");
+    terminal_writestring("  write <file> <text>\n");
+    terminal_writestring("  gui         - Test compositor draw\n");
+    terminal_writestring("  reboot/history\n");
+    terminal_writestring("\n  v0.5: FB 1024x768, Mouse, Compositor 16 wins\n\n");
 }
 
 static void cmd_zero(void) {
@@ -81,6 +81,7 @@ extern int vfs_write_file(const char* name, const char* data);
 extern int vfs_read_file(const char* name, char* buffer, uint32_t max);
 extern int vfs_delete(const char* name);
 extern int vfs_exists(const char* name);
+extern void compositor_draw(void);
 
 static void cmd_uname(void) {
     terminal_writestring("\n Zero OS 0.3.0 x86_64 Memory Build\n");
@@ -148,6 +149,10 @@ static void execute_command(void) {
         cmd_mem();
     } else if(strcmp(buffer, "ls") == 0) {
         vfs_ls();
+    } else if(strcmp(buffer, "gui") == 0) {
+        terminal_writestring("\n [GUI] Drawing Zero Ring compositor...\n");
+        compositor_draw();
+        terminal_writestring(" If in graphics mode, you'd see ring + windows.\n In text mode, shell continues.\n\n");
     } else if(strncmp(buffer, "touch ", 6) == 0) {
         char* fname = buffer+6;
         while(*fname==' ') fname++;

@@ -3,7 +3,7 @@ CFLAGS = -ffreestanding -fno-builtin -fno-stack-protector -nostartfiles -nodefau
 BOOT_CFLAGS = -ffreestanding -c
 
 LDFLAGS = -n -T linker.ld
-OBJECTS = boot.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o fs/ata.o fs/ramfs.o fs/vfs.o
+OBJECTS = boot.o kernel.o keyboard.o shell.o gdt.o idt.o pic.o pmm.o heap.o fs/ata.o fs/ramfs.o fs/vfs.o gui/fb.o gui/mouse.o gui/compositor.o
 KERNEL = zero-kernel.elf
 
 all: kernel
@@ -44,14 +44,22 @@ fs/ramfs.o: fs/ramfs.c fs/ramfs.h heap.h io.h
 fs/vfs.o: fs/vfs.c fs/vfs.h fs/ramfs.h fs/ata.h heap.h io.h
 	$(CC) $(CFLAGS) fs/vfs.c -o fs/vfs.o
 
+gui/fb.o: gui/fb.h gui/fb.c io.h
+	$(CC) $(CFLAGS) gui/fb.c -o gui/fb.o
+
+gui/mouse.o: gui/mouse.h gui/mouse.c io.h
+	$(CC) $(CFLAGS) gui/mouse.c -o gui/mouse.o
+
+gui/compositor.o: gui/compositor.h gui/compositor.c gui/fb.h heap.h io.h
+	$(CC) $(CFLAGS) gui/compositor.c -o gui/compositor.o
+
 kernel: $(OBJECTS)
 	ld $(LDFLAGS) -o $(KERNEL) $(OBJECTS)
-	@echo "✅ Zero OS v0.4 Kernel built: $(KERNEL)"
+	@echo "✅ Zero OS v0.5 Kernel built: $(KERNEL)"
 	@ls -lh $(KERNEL)
 	@file $(KERNEL) || true
 	@echo "Size: $$(du -h $(KERNEL) | cut -f1)"
-	@echo "Objects: $(OBJECTS)"
 
 clean:
-	rm -f *.o $(KERNEL) zero-os.iso fs/*.o
+	rm -f *.o $(KERNEL) zero-os.iso fs/*.o gui/*.o
 	rm -rf iso

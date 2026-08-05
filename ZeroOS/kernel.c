@@ -112,7 +112,7 @@ void draw_zero_logo(void) {
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("            +@@@@@@@@@@@*     ZERO OS     *@@@@@@@@@@@+              \n");
-    terminal_writestring("            %@@@@@@@@@@@=     v0.3.0      =@@@@@@@@@@@%              \n");
+    terminal_writestring("            %@@@@@@@@@@@=     v0.5.0      =@@@@@@@@@@@%              \n");
     terminal_writestring("            +@@@@@@@@@@@*                 *@@@@@@@@@@@+              \n");
     terminal_writestring("             =@@@@@@@@@@@%=             =%@@@@@@@@@@@=               \n");
     terminal_writestring("               *@@@@@@@@@@@@%+-:..  ..:-+%@@@@@@@@@@@@*               \n");
@@ -131,6 +131,10 @@ extern uint32_t pmm_get_free_blocks(void);
 extern uint32_t pmm_get_total_blocks(void);
 extern uint32_t heap_get_free(void);
 extern void vfs_init(void);
+extern void fb_init(uint32_t mb_info);
+extern void mouse_init(void);
+extern void compositor_init(void);
+extern void compositor_draw(void);
 extern void shell_run(void);
 
 void kernel_main(uint32_t magic, uint32_t mb_info) {
@@ -183,22 +187,35 @@ void kernel_main(uint32_t magic, uint32_t mb_info) {
     vfs_init();
     terminal_writestring("OK\n");
 
+    terminal_writestring("  > FB init (1024x768)... ");
+    fb_init(mb_info);
+    terminal_writestring("OK (text fallback in sandbox)\n");
+
+    terminal_writestring("  > Mouse init (PS/2)... ");
+    mouse_init();
+    terminal_writestring("OK\n");
+
+    terminal_writestring("  > Compositor init (Zero Ring)... ");
+    compositor_init();
+    terminal_writestring("OK\n");
+
     terminal_writestring("  > Zero Ring: [//////////] 100%\n\n");
 
     draw_zero_logo();
 
     terminal_writestring("\n");
     terminal_writestring("  ------------------------------------------------------------\n");
-    terminal_writestring("   Zero OS v0.4.0 - ZeroFS Build\n");
-    terminal_writestring("   GDT+IDT+PIC+PMM+Heap+VFS Ready\n");
+    terminal_writestring("   Zero OS v0.5.0 - Zero Ring GUI Build\n");
+    terminal_writestring("   GDT+IDT+PIC+PMM+Heap+VFS+FB+Mouse+Compositor\n");
     terminal_writestring("   Zero Bloat. Zero Tracking. Zero Limits.\n");
     terminal_writestring("  ------------------------------------------------------------\n");
     terminal_writestring("\n");
-    terminal_writestring("   New in v0.4:\n");
-    terminal_writestring("   - ZeroFS: RamFS 32 files, 4KB each\n");
-    terminal_writestring("   - ATA PIO driver (read/write sectors)\n");
-    terminal_writestring("   - New commands: ls, cat, touch, rm, write\n");
-    terminal_writestring("   - Type 'ls' to see files\n");
+    terminal_writestring("   New in v0.5:\n");
+    terminal_writestring("   - FB: 1024x768x32 LFB or VGA fallback\n");
+    terminal_writestring("   - Mouse: PS/2 3-byte packet\n");
+    terminal_writestring("   - Compositor: Zero Ring + 16 windows max\n");
+    terminal_writestring("   - GUI: circle, rect, pixel primitives\n");
+    terminal_writestring("   - Web preview is real GUI concept\n");
     terminal_writestring("\n");
 
     // enable interrupts
