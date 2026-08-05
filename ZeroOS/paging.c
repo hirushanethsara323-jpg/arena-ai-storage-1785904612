@@ -17,25 +17,33 @@ static uint32_t* paging_alloc_frame(void) {
 }
 
 void paging_init(void) {
+    terminal_writestring(" PD alloc ");
     page_directory = (page_dir_t*)pmm_alloc_block();
     if(!page_directory) {
-        terminal_writestring("  [PAGING] Failed alloc dir!\n");
+        terminal_writestring("FAIL\n");
         return;
     }
+    terminal_writestring("OK ");
     for(int i=0;i<1024;i++) {
         (*page_directory)[i] = 0;
         page_tables[i]=0;
     }
+    terminal_writestring("clear OK, mapping 16MB...");
 
+    int maps=0;
     for(uint32_t addr=0; addr<0x01000000; addr+=PAGE_SIZE) {
         paging_map(addr, addr, PAGE_PRESENT | PAGE_WRITE);
+        maps++;
+        if(maps%1024==0) {
+            terminal_writestring(".");
+        }
     }
 
-    terminal_writestring("  [PAGING] PD @0x");
+    terminal_writestring(" mapped, PD @0x");
     {
-        uint64_t a=(uint64_t)page_directory;
+        uint32_t a=(uint32_t)page_directory;
         char hex[]="0123456789ABCDEF";
-        char out[17]; for(int i=0;i<8;i++){ out[7-i]=hex[a&0xF]; a>>=4; } out[8]=0;
+        char out[9]; for(int i=0;i<8;i++){ out[7-i]=hex[a&0xF]; a>>=4; } out[8]=0;
         terminal_writestring(out);
     }
     terminal_writestring(" 16MB identity\n");
@@ -73,13 +81,7 @@ uint32_t paging_get_phys(uint32_t virtual_addr) {
 }
 
 void paging_enable(void) {
-    // Real enable - now 64-bit compatible
-    // In sandbox, we skip actual CR3 load to avoid faulting, but show what would happen
-    // For real 32-bit build with boot_real.S, this will work
-    terminal_writestring("  [PAGING] Enable: CR3=PD, CR0.PG=1 (simulated in 64-bit sandbox)\n");
-    // Uncomment for real HW 32-bit build:
-    // __asm__ volatile ("movl %0, %%cr3" : : "r"(page_directory));
-    // uint32_t cr0; __asm__ volatile ("movl %%cr0, %0" : "=r"(cr0)); cr0|=0x80000000; __asm__ volatile ("movl %0, %%cr0" : : "r"(cr0));
+    terminal_writestring("  [PAGING] Enable sim\n");
 }
 
 void paging_dump(void) {

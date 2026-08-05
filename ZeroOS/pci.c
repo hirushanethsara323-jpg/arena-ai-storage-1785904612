@@ -8,12 +8,8 @@ static int pci_device_count = 0;
 
 uint32_t pci_read(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset) {
     uint32_t address = (1<<31) | (bus<<16) | (device<<11) | (function<<8) | (offset & 0xFC);
-    outb(PCI_CONFIG_ADDRESS, (address >> 0) & 0xFF);
-    outb(PCI_CONFIG_ADDRESS+1, (address >> 8) & 0xFF);
-    outb(PCI_CONFIG_ADDRESS+2, (address >> 16) & 0xFF);
-    outb(PCI_CONFIG_ADDRESS+3, (address >> 24) & 0xFF);
-    uint32_t data = inb(PCI_CONFIG_DATA) | (inb(PCI_CONFIG_DATA+1)<<8) | (inb(PCI_CONFIG_DATA+2)<<16) | (inb(PCI_CONFIG_DATA+3)<<24);
-    return data;
+    outl(PCI_CONFIG_ADDRESS, address);
+    return inl(PCI_CONFIG_DATA);
 }
 
 void pci_scan(void) {

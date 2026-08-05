@@ -39,13 +39,13 @@ void pmm_init(uint32_t mem_size_kb, uint32_t bitmap_addr) {
     // clear bitmap - all used
     for(uint32_t i=0;i<pmm_max_blocks/32;i++) pmm_bitmap[i]=0xFFFFFFFF;
 
-    // For now, we will init 16MB after 1MB as free (simulate)
-    // 1MB = 256 blocks, so free from 256 to 256+4096
-    pmm_init_region(0x100000, 16*1024*1024);
+    // Real: free from 3MB onwards to avoid overwriting kernel (1MB) + heap (2MB 1MB)
+    // Kernel at 0x100000 (~74K), heap at 0x200000 1MB, so reserve 0-3MB
+    pmm_init_region(0x300000, 14*1024*1024); // 14MB free from 3MB
 
-    // reserve first MB
-    pmm_deinit_region(0x0, 0x100000);
-    // reserve bitmap itself
+    // reserve first 3MB (0-3MB) for BIOS, kernel, heap, etc
+    pmm_deinit_region(0x0, 0x300000);
+    // reserve bitmap itself (already in 0-3MB, but extra)
     pmm_deinit_region(bitmap_addr, 4096);
 }
 

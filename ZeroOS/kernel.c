@@ -101,8 +101,12 @@ size_t strlen(const char* str) {
     while (str[len]) len++;
     return len;
 }
+void serial_writestring(const char* data); // from serial.c
+
 void terminal_writestring(const char* data) {
     terminal_write(data, strlen(data));
+    // Also write to serial for QEMU -nographic debugging
+    serial_writestring(data);
 }
 void draw_zero_logo(void) {
     terminal_writestring("\n");
@@ -154,7 +158,11 @@ extern void fat32_init(void);
 extern void ai_init(void);
 extern void shell_run(void);
 
+extern void serial_init(void);
+
 void kernel_main(uint32_t magic, uint32_t mb_info) {
+    serial_init();
+    serial_writestring("\n[Zero OS] Serial init OK, booting...\n");
     terminal_initialize();
     
     terminal_writestring("\n");
@@ -276,9 +284,8 @@ void kernel_main(uint32_t magic, uint32_t mb_info) {
     ai_init();
     terminal_writestring("OK\n");
 
-    terminal_writestring("  > Speaker beep test... ");
-    speaker_play_tone(800, 60);
-    terminal_writestring("OK\n");
+    terminal_writestring("  > Speaker beep test... SKIP for QEMU (needs IRQ)\n");
+    // speaker_play_tone(800, 60);
 
     terminal_writestring("  > Zero Ring: [//////////] 100%\n\n");
 
